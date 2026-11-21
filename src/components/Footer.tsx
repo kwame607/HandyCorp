@@ -5,10 +5,11 @@ import { FacebookIcon, InstagramIcon, XIcon } from "./icons";
 const links = [
   { href: "/services", label: "Explore Services" },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/#professionals", label: "Become a Professional" },
-  { href: "/about", label: "About Us" },
+  { href: "/professionals/join", label: "Become a Professional" },
+  { href: "/about", label: "About HandyCorp" },
   { href: "/contact", label: "Contact" },
-  { href: "/legal", label: "Terms and Privacy" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms of Service" },
 ];
 
 // Social URLs are placeholders until the accounts exist.

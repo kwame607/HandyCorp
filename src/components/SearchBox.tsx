@@ -1,38 +1,58 @@
 "use client";
 
 import { useState } from "react";
+import { categories } from "@/data/services";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
 
-// Specific services, not just categories (see proposal section 4).
-const services = [
-  "Plumber",
-  "Electrician",
-  "Carpenter",
-  "Painter",
-  "Mason",
-  "Tiler",
-  "Phone repair",
-  "Laptop repair",
-  "TV repair",
-  "Appliance repair",
-  "Barber",
-  "Hairstylist",
-  "Makeup artist",
-  "Nail technician",
-  "Mechanic",
-  "Auto electrician",
-  "Tyre technician",
-];
+const serviceSuggestions = categories.flatMap((c) =>
+  c.services.map((s) => s.name),
+);
 
 // Initial launch areas from the proposal; final coverage is still to be confirmed.
 const areas = ["Ahodwo", "Asokwa", "Adum", "Bantama", "KNUST area"];
 
-export default function SearchBox() {
-  const [location, setLocation] = useState("");
+type Props = {
+  /** "hero" is the rounded homepage bar; "directory" is the flatter bar used inside pages. */
+  variant?: "hero" | "directory";
+  servicePlaceholder?: string;
+  locationPlaceholder?: string;
+  buttonLabel?: string;
+  defaultService?: string;
+  defaultLocation?: string;
+  /** Unique prefix so two search bars on one page never share datalist ids. */
+  idPrefix?: string;
+};
+
+const styles = {
+  hero: {
+    wrap: "flex flex-col gap-2 rounded-3xl bg-white p-2 shadow-[0_10px_40px_-12px_rgba(20,22,26,0.25)] ring-1 ring-ink/10 md:flex-row md:items-center md:rounded-full",
+    field: "rounded-2xl md:rounded-full",
+    button: "rounded-2xl px-7 py-4 md:rounded-full",
+  },
+  directory: {
+    wrap: "flex flex-col gap-2 rounded-lg border border-line bg-white p-2 md:flex-row md:items-center",
+    field: "rounded-md",
+    button: "rounded-md px-6 py-3.5",
+  },
+} as const;
+
+export default function SearchBox({
+  variant = "hero",
+  servicePlaceholder = "What service do you need?",
+  locationPlaceholder = "Enter your location",
+  buttonLabel = "Find Professionals",
+  defaultService = "",
+  defaultLocation = "",
+  idPrefix = "search",
+}: Props) {
+  const [location, setLocation] = useState(defaultLocation);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
     null,
   );
   const [status, setStatus] = useState("");
+  const s = styles[variant];
+  const serviceList = `${idPrefix}-services`;
+  const areaList = `${idPrefix}-areas`;
 
   function useMyLocation() {
     if (!("geolocation" in navigator)) {
@@ -59,17 +79,20 @@ export default function SearchBox() {
       method="get"
       role="search"
       className="w-full"
-      aria-label="Find professionals"
+      aria-label="Search services"
     >
-      <div className="flex flex-col gap-2 rounded-3xl bg-white p-2 shadow-[0_10px_40px_-12px_rgba(20,22,26,0.25)] ring-1 ring-ink/10 md:flex-row md:items-center md:rounded-full">
-        <label className="flex flex-1 items-center gap-3 rounded-2xl px-4 py-3 focus-within:bg-sand/60 md:rounded-full">
+      <div className={s.wrap}>
+        <label
+          className={`flex flex-1 items-center gap-3 px-4 py-3 focus-within:bg-sand/60 ${s.field}`}
+        >
           <SearchIcon className="shrink-0 text-slate" />
           <span className="sr-only">Service</span>
           <input
             name="q"
             type="text"
-            list="service-list"
-            placeholder="What service do you need?"
+            list={serviceList}
+            defaultValue={defaultService}
+            placeholder={servicePlaceholder}
             autoComplete="off"
             className="w-full bg-transparent text-base text-ink placeholder:text-slate focus:outline-none"
           />
@@ -77,20 +100,22 @@ export default function SearchBox() {
 
         <div className="hidden h-8 w-px bg-ink/10 md:block" aria-hidden="true" />
 
-        <div className="flex flex-1 items-center gap-1 rounded-2xl pr-2 focus-within:bg-sand/60 md:rounded-full">
+        <div
+          className={`flex flex-1 items-center gap-1 pr-2 focus-within:bg-sand/60 ${s.field}`}
+        >
           <label className="flex flex-1 items-center gap-3 px-4 py-3">
             <PinIcon className="shrink-0 text-slate" />
             <span className="sr-only">Location</span>
             <input
               name="location"
               type="text"
-              list="area-list"
+              list={areaList}
               value={location}
               onChange={(e) => {
                 setLocation(e.target.value);
                 setCoords(null);
               }}
-              placeholder="Enter your location"
+              placeholder={locationPlaceholder}
               autoComplete="off"
               className="w-full bg-transparent text-base text-ink placeholder:text-slate focus:outline-none"
             />
@@ -115,9 +140,9 @@ export default function SearchBox() {
 
         <button
           type="submit"
-          className="rounded-2xl bg-gold px-7 py-4 text-base font-bold text-ink transition-colors hover:bg-gold-deep md:rounded-full"
+          className={`bg-gold text-base font-bold text-ink transition-colors hover:bg-gold-deep ${s.button}`}
         >
-          Find Professionals
+          {buttonLabel}
         </button>
       </div>
 
@@ -129,12 +154,12 @@ export default function SearchBox() {
         {status || "Starting in Kumasi. Type your area or use your location."}
       </p>
 
-      <datalist id="service-list">
-        {services.map((s) => (
-          <option key={s} value={s} />
+      <datalist id={serviceList}>
+        {serviceSuggestions.map((name) => (
+          <option key={name} value={name} />
         ))}
       </datalist>
-      <datalist id="area-list">
+      <datalist id={areaList}>
         {areas.map((a) => (
           <option key={a} value={a} />
         ))}

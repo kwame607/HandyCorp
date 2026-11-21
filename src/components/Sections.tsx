@@ -1,45 +1,16 @@
 import Link from "next/link";
+import { categories } from "@/data/services";
+import CategoryIcon from "./CategoryIcon";
 import {
   ArrowIcon,
-  CarIcon,
   ChatIcon,
   CheckIcon,
-  PhoneIcon,
   ProfileIcon,
   QuoteIcon,
-  ScissorsIcon,
   SearchIcon,
   ShieldIcon,
   StarIcon,
-  WrenchIcon,
 } from "./icons";
-
-const categories = [
-  {
-    name: "Home Services & Repairs",
-    note: "Plumbing, electrical, carpentry, painting",
-    slug: "home-services-repairs",
-    Icon: WrenchIcon,
-  },
-  {
-    name: "Electronics & Technology",
-    note: "Phones, laptops, TVs, appliances",
-    slug: "electronics-technology",
-    Icon: PhoneIcon,
-  },
-  {
-    name: "Grooming & Personal Care",
-    note: "Barbers, hairstylists, makeup, nails",
-    slug: "grooming-personal-care",
-    Icon: ScissorsIcon,
-  },
-  {
-    name: "Automotive Services",
-    note: "Mechanics, auto electricians, tyres",
-    slug: "automotive-services",
-    Icon: CarIcon,
-  },
-];
 
 export function PopularServices() {
   return (
@@ -59,21 +30,21 @@ export function PopularServices() {
         </div>
 
         <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.map(({ name, note, slug, Icon }) => (
+          {categories.map(({ name, summary, slug }) => (
             <li key={slug}>
               <Link
-                href={`/services?category=${slug}`}
+                href={`/services/${slug}`}
                 className="group flex h-full min-h-56 flex-col justify-between rounded-3xl bg-sand p-6 transition-colors hover:bg-ink hover:text-paper"
               >
                 <span className="grid h-14 w-14 place-items-center rounded-2xl bg-paper text-ink transition-colors group-hover:bg-gold">
-                  <Icon width={28} height={28} />
+                  <CategoryIcon slug={slug} width={28} height={28} />
                 </span>
                 <span>
                   <span className="block font-display text-xl font-bold leading-tight">
                     {name}
                   </span>
                   <span className="mt-2 block text-[15px] text-slate transition-colors group-hover:text-paper/70">
-                    {note}
+                    {summary}
                   </span>
                 </span>
               </Link>
