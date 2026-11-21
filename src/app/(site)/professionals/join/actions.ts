@@ -1,11 +1,14 @@
 "use server";
 
+import { areaSlug } from "@/data/areas";
 import {
+  normaliseGhanaPhone,
   readApplication,
   validateApplication,
   type ApplicationValues,
   type FieldErrors,
 } from "@/lib/professional-application";
+import { createAnonClient } from "@/lib/supabase";
 
 export type ApplicationState = {
   status: "idle" | "invalid" | "preview" | "received" | "error";
@@ -29,16 +32,29 @@ export async function submitApplication(
     return { status: "invalid", errors, values };
   }
 
-  // Applications are only accepted once real storage exists. Until then the
-  // form validates and says so plainly instead of pretending to save.
+  // Launch switch: until APPLICATIONS_ENABLED=true the form only previews.
   if (process.env.APPLICATIONS_ENABLED !== "true") {
     return { status: "preview", values };
   }
 
   try {
-    // TODO: save to the database (Supabase `professional_profiles` +
-    // `verifications`) and notify the operations team.
-    throw new Error("Application storage is not connected yet.");
+    const supabase = createAnonClient();
+    const { error } = await supabase.rpc("submit_professional_application", {
+      p_full_name: values.fullName,
+      p_phone: normaliseGhanaPhone(values.phone),
+      p_email: values.email,
+      p_experience: values.experience,
+      p_work_mode: values.workMode,
+      p_about: values.about,
+      p_service_slugs: values.services,
+      p_area_slugs: values.areas.map(areaSlug),
+    });
+    if (error) {
+      // Log the code only. Never log applicant details.
+      console.error("submit_professional_application failed:", error.code);
+      throw new Error(error.code);
+    }
+    return { status: "received" };
   } catch {
     return {
       status: "error",
