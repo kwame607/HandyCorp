@@ -32,8 +32,19 @@ npm run dev
 - Application tables are private. The website can only add an application through the `submit_professional_application` function, which validates everything and ignores repeat phone numbers.
 - The website uses only the publishable key. Never put the `service_role` key in this project.
 
-## Professional applications
+## Accounts and sign-in
 
-`/professionals/join` saves to the database only when `APPLICATIONS_ENABLED=true`. Leave it `false` until you are ready to accept real applications; the page then shows a notice and saves nothing.
+Routes: `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/account` (customers) and `/professional/login`, `/professional/signup`, `/professional/onboarding`, `/professional/dashboard` (professionals).
 
-The service and area lists still exist in two places: `src/data/*.ts` (used by the site) and the database (used to validate applications). Keep them in step until the site reads the catalogue from the database.
+- Roles (`customer`, `professional`, `admin`) live in `public.profiles` and are checked on the server. People cannot change their own role. Sign-up can only create customers or professionals.
+- A professional's registration starts as `submitted`. Only an admin can change the status, so no one gets a verified badge automatically. To make an admin, change `role` for that user in the Supabase table editor.
+- Uploads go to the private `professional-uploads` bucket (5 MB, JPG/PNG/WebP/PDF), one folder per user.
+- Sign-in is by **email and password**. Phone numbers are collected and saved, but signing in with a phone number needs an SMS provider, which isn't set up.
+
+### Supabase dashboard settings (Authentication)
+
+1. **URL Configuration**: Site URL `http://localhost:3000` (your real domain later). Add redirect URL `http://localhost:3000/auth/callback` (and the live one).
+2. **Email**: with "Confirm email" on, Supabase's built-in sender is heavily rate limited and meant for testing. For launch, set up your own SMTP. While developing you can switch "Confirm email" off so sign-up signs you straight in.
+3. Optional: raise the minimum password length under Authentication > Sign In / Providers > Email.
+
+The old `professional_applications` tables are no longer used by the site and can be dropped later.

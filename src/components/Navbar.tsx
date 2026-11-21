@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import Logo from "./Logo";
+import { signOut } from "@/app/(site)/(auth)/actions";
+import { useAuthState } from "./auth/useAuthState";
 import { CloseIcon, MenuIcon } from "./icons";
 
 const links = [
@@ -15,6 +17,8 @@ const links = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const user = useAuthState();
+  const home = user?.role === "professional" ? "/professional/dashboard" : "/account";
 
   const isActive = (section?: string) =>
     !!section && (pathname === section || pathname.startsWith(`${section}/`));
@@ -48,18 +52,27 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/signin"
-            className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/get-started"
-            className="rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink/85"
-          >
-            Get Started
-          </Link>
+          {user ? (
+            <>
+              <Link href={home} className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5">
+                {user.role === "professional" ? "Dashboard" : "My Account"}
+              </Link>
+              <form action={signOut}>
+                <button className="rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink/85">
+                  Sign Out
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5">
+                Sign In
+              </Link>
+              <Link href="/signup" className="rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink/85">
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -104,20 +117,25 @@ export default function Navbar() {
             })}
           </nav>
           <div className="mt-5 flex gap-3">
-            <Link
-              href="/signin"
-              onClick={() => setOpen(false)}
-              className="flex-1 rounded-full border border-ink/20 py-3 text-center font-medium"
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/get-started"
-              onClick={() => setOpen(false)}
-              className="flex-1 rounded-full bg-ink py-3 text-center font-semibold text-paper"
-            >
-              Get Started
-            </Link>
+            {user ? (
+              <>
+                <Link href={home} onClick={() => setOpen(false)} className="flex-1 rounded-full border border-ink/20 py-3 text-center font-medium">
+                  {user.role === "professional" ? "Dashboard" : "My Account"}
+                </Link>
+                <form action={signOut} className="flex-1">
+                  <button className="w-full rounded-full bg-ink py-3 text-center font-semibold text-paper">Sign Out</button>
+                </form>
+              </>
+            ) : (
+              <>
+                <Link href="/login" onClick={() => setOpen(false)} className="flex-1 rounded-full border border-ink/20 py-3 text-center font-medium">
+                  Sign In
+                </Link>
+                <Link href="/signup" onClick={() => setOpen(false)} className="flex-1 rounded-full bg-ink py-3 text-center font-semibold text-paper">
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { connection } from "next/server";
-import { Suspense } from "react";
-import ApplicationForm from "@/components/professionals/ApplicationForm";
 import Breadcrumb from "@/components/services/Breadcrumb";
 
 export const metadata: Metadata = {
@@ -32,8 +29,8 @@ const benefits = [
 
 const steps = [
   {
-    title: "Send your application.",
-    text: "Tell us your services, your areas and your experience.",
+    title: "Create your account and register.",
+    text: "Tell us your services, your areas and your experience, and show examples of your work.",
   },
   {
     title: "Verification.",
@@ -48,15 +45,6 @@ const steps = [
     text: "Accept the jobs that suit you and send quotations.",
   },
 ];
-
-// Read at request time so the notice always matches what the server action
-// will actually do, even if the setting changes without a rebuild.
-async function Application() {
-  await connection();
-  return (
-    <ApplicationForm open={process.env.APPLICATIONS_ENABLED === "true"} />
-  );
-}
 
 export default function JoinPage() {
   return (
@@ -76,12 +64,12 @@ export default function JoinPage() {
           Connect with customers looking for the services you offer. Manage
           requests, build your reputation and grow your work.
         </p>
-        <a
-          href="#apply"
+        <Link
+          href="/professional/signup"
           className="mt-8 inline-block rounded-md bg-ink px-7 py-4 font-semibold text-paper transition-colors hover:bg-ink/85"
         >
-          Apply to join
-        </a>
+          Register as a professional
+        </Link>
       </section>
 
       <section
@@ -130,35 +118,28 @@ export default function JoinPage() {
         </div>
       </section>
 
-      <section
-        id="apply"
-        aria-labelledby="apply-heading"
-        className="scroll-mt-20 border-t border-line pb-20 pt-14 md:pb-28 md:pt-16"
-      >
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 lg:grid-cols-[1fr_2fr] lg:gap-16">
-          <div>
-            <h2 id="apply-heading" className="font-display text-3xl font-bold tracking-tight">
-              Apply to join
-            </h2>
-            <p className="mt-3 max-w-sm leading-relaxed text-slate">
-              It takes a few minutes. We&apos;re starting with selected areas of
-              Kumasi.
-            </p>
-            <p className="mt-6 text-slate">
-              Looking for a professional instead?{" "}
-              <Link href="/services" className="font-medium text-ink underline decoration-gold decoration-2 underline-offset-4">
-                Browse services
-              </Link>
-            </p>
+      <section aria-labelledby="apply-heading" className="border-t border-line py-14 md:py-20">
+        <div className="mx-auto max-w-6xl px-5">
+          <h2 id="apply-heading" className="font-display text-3xl font-bold tracking-tight">
+            Ready to join?
+          </h2>
+          <p className="mt-3 max-w-xl leading-relaxed text-slate">
+            Registration takes a few minutes. We&apos;re starting with selected areas of Kumasi.
+          </p>
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href="/professional/signup" className="rounded-md bg-gold px-7 py-4 font-bold transition-colors hover:bg-gold-deep">
+              Register as a professional
+            </Link>
+            <Link href="/professional/login" className="font-medium underline decoration-gold decoration-2 underline-offset-4">
+              Already registered? Sign in
+            </Link>
           </div>
-
-          <div className="rounded-lg border border-line bg-white p-6 md:p-10">
-            <Suspense
-              fallback={<div aria-busy="true" className="min-h-96" />}
-            >
-              <Application />
-            </Suspense>
-          </div>
+          <p className="mt-8 text-slate">
+            Looking for a professional instead?{" "}
+            <Link href="/services" className="font-medium text-ink underline decoration-gold decoration-2 underline-offset-4">
+              Browse services
+            </Link>
+          </p>
         </div>
       </section>
     </main>
