@@ -20,9 +20,7 @@ export default async function Page({ searchParams }: PageProps<"/admin/categorie
   return (
     <>
       <PageHeader title="Service Categories" text="Manage the categories and services professionals can register for. Items are deactivated, never deleted, so existing records stay intact." />
-      <Notice tone="info">
-        The public website and the registration form still read their category and service lists from the site&apos;s code. Changes here are saved and logged, and the database already enforces them (for example, no one can register under a deactivated category), but new items won&apos;t appear on the website until the site reads from the database. That is the next step.
-      </Notice>
+      <Notice tone="info">Changes here update the public website and the registration form within moments. A category appears on the website once it has at least one active service.</Notice>
       {sp.saved && <Notice tone="ok">Saved.</Notice>}
       {sp.error && <Notice tone="error">{str(sp.error) === "1" ? "Something went wrong." : str(sp.error)}</Notice>}
 
@@ -63,9 +61,13 @@ export default async function Page({ searchParams }: PageProps<"/admin/categorie
 
               <form action={addService} className="mb-5 flex flex-wrap items-end gap-3">
                 <input type="hidden" name="category" value={c.id} />
-                <div className="min-w-56 flex-1">
+                <div className="min-w-48 flex-1">
                   <label htmlFor={`svc-${c.id}`} className="text-sm font-medium">Add a service to {c.name}</label>
                   <input id={`svc-${c.id}`} name="name" required minLength={2} maxLength={80} className={`mt-1 ${inputCls}`} />
+                </div>
+                <div className="min-w-48 flex-1">
+                  <label htmlFor={`kw-${c.id}`} className="text-sm font-medium">Search words <span className="font-normal text-slate">(optional)</span></label>
+                  <input id={`kw-${c.id}`} name="keywords" maxLength={300} placeholder="plumber, pipes, leak" className={`mt-1 ${inputCls}`} />
                 </div>
                 <button className="rounded-md border border-ink/30 px-4 py-2.5 text-[15px] font-semibold hover:bg-ink/5">Add service</button>
               </form>

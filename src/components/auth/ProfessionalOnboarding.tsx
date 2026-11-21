@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { areas } from "@/data/areas";
 import { areaSlug } from "@/data/areas";
-import { categories } from "@/data/services";
+import type { Category } from "@/data/services";
 import { experienceOptions } from "@/lib/professional-application";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { FieldError, inputClass } from "./fields";
@@ -65,7 +64,7 @@ function FilePicker(props: {
   );
 }
 
-export default function ProfessionalOnboarding({ userId, name }: { userId: string; name: string }) {
+export default function ProfessionalOnboarding({ userId, name, categories, areas }: { userId: string; name: string; categories: Category[]; areas: string[] }) {
   const [step, setStep] = useState(2);
   const [d, setD] = useState<Data>({
     displayName: "", category: "", services: [], description: "", experience: "",

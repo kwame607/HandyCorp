@@ -1,6 +1,5 @@
-// Single source of truth for categories and services.
-// Plain data only (no React), so it can later be replaced by database queries
-// that return the same shapes.
+// Types, helpers and a built-in copy of the lists. The live lists come from the
+// database (see src/lib/catalogue.ts); this copy is only the fallback.
 
 export type Service = {
   slug: string;
@@ -110,24 +109,26 @@ export const popularServices: { label: string; service: string }[] = [
   { label: "Appliance repairs", service: "home-appliance-repairs" },
 ];
 
-export function getCategory(slug: string): Category | undefined {
-  return categories.find((c) => c.slug === slug);
+export function getCategory(list: Category[], slug: string): Category | undefined {
+  return list.find((c) => c.slug === slug);
 }
 
 export function getService(
+  list: Category[],
   categorySlug: string,
   serviceSlug: string,
 ): { category: Category; service: Service } | undefined {
-  const category = getCategory(categorySlug);
+  const category = getCategory(list, categorySlug);
   const service = category?.services.find((s) => s.slug === serviceSlug);
   return category && service ? { category, service } : undefined;
 }
 
 /** Find a service by slug alone (slugs are unique across categories). */
 export function findServiceBySlug(
+  list: Category[],
   serviceSlug: string,
 ): { category: Category; service: Service } | undefined {
-  for (const category of categories) {
+  for (const category of list) {
     const service = category.services.find((s) => s.slug === serviceSlug);
     if (service) return { category, service };
   }

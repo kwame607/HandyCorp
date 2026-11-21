@@ -1,16 +1,18 @@
 import Link from "next/link";
-import { serviceHref } from "@/data/services";
+import { serviceHref, type Category } from "@/data/services";
 import { searchCatalog } from "@/lib/service-search";
 import { ArrowIcon } from "../icons";
 
 export default function SearchResults({
+  all,
   query,
   location,
 }: {
+  all: Category[];
   query: string;
   location: string;
 }) {
-  const { services, categories } = searchCatalog(query);
+  const { services, categories } = searchCatalog(all, query);
 
   return (
     <section

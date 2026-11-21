@@ -1,5 +1,6 @@
 "use server";
 
+import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { statusList } from "@/lib/professional-status";
@@ -15,6 +16,7 @@ async function admin() {
 }
 
 function done(path: string, ok: boolean, msg?: string): never {
+  if (ok && path.startsWith("/admin/categories")) updateTag("catalogue");
   const sep = path.includes("?") ? "&" : "?";
   redirect(`${path}${sep}${ok ? "saved=1" : `error=${encodeURIComponent(msg ?? "1")}`}`);
 }
@@ -72,7 +74,7 @@ export async function addService(f: FormData) {
   const id = field(f, "category");
   const supabase = await admin();
   if (!uuid.test(id)) redirect("/admin/categories");
-  const { error } = await supabase.rpc("admin_add_service", { p_category: id, p_name: field(f, "name") });
+  const { error } = await supabase.rpc("admin_add_service", { p_category: id, p_name: field(f, "name"), p_keywords: field(f, "keywords") });
   if (error) console.error("[admin] add service failed:", error.code || "no code");
   done("/admin/categories", !error, friendly(error?.message));
 }

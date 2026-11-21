@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { findServiceBySlug, popularServices, serviceHref } from "@/data/services";
+import { findServiceBySlug, serviceHref, type Category } from "@/data/services";
 import { ArrowIcon } from "../icons";
 
-export default function PopularServiceLinks() {
+export default function PopularServiceLinks({ categories, popular }: { categories: Category[]; popular: { label: string; service: string }[] }) {
   return (
     <section
       aria-labelledby="popular-heading"
@@ -14,8 +14,8 @@ export default function PopularServiceLinks() {
         </h2>
 
         <ul className="mt-8 grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 md:grid-cols-4">
-          {popularServices.map(({ label, service }) => {
-            const found = findServiceBySlug(service);
+          {popular.map(({ label, service }) => {
+            const found = findServiceBySlug(categories, service);
             if (!found) return null;
             return (
               <li key={service}>

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
+import { getCatalogue } from "@/lib/catalogue";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import ProfessionalOnboarding from "@/components/auth/ProfessionalOnboarding";
@@ -11,7 +12,8 @@ async function Body() {
   const supabase = await createClient();
   const { data } = await supabase.from("professional_profiles").select("user_id").eq("user_id", user.id).maybeSingle();
   if (data) redirect("/professional/dashboard");
-  return <ProfessionalOnboarding userId={user.id} name={user.fullName} />;
+  const { categories, areas } = await getCatalogue();
+  return <ProfessionalOnboarding userId={user.id} name={user.fullName} categories={categories} areas={areas} />;
 }
 
 export default function Page() {

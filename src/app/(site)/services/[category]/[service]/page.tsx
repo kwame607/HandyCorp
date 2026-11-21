@@ -2,9 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import Breadcrumb from "@/components/services/Breadcrumb";
-import { categories, getService } from "@/data/services";
+import { getService } from "@/data/services";
+import { getCatalogue } from "@/lib/catalogue";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { categories } = await getCatalogue();
   return categories.flatMap((c) =>
     c.services.map((s) => ({ category: c.slug, service: s.slug })),
   );
@@ -14,7 +16,8 @@ export async function generateMetadata(
   props: PageProps<"/services/[category]/[service]">,
 ) {
   const { category, service } = await props.params;
-  const found = getService(category, service);
+  const { categories } = await getCatalogue();
+  const found = getService(categories, category, service);
   return { title: found ? `${found.service.name} | HandyCorp` : "Services | HandyCorp" };
 }
 
@@ -32,7 +35,8 @@ export default async function ServicePage(
   props: PageProps<"/services/[category]/[service]">,
 ) {
   const { category: categorySlug, service: serviceSlug } = await props.params;
-  const found = getService(categorySlug, serviceSlug);
+  const { categories } = await getCatalogue();
+  const found = getService(categories, categorySlug, serviceSlug);
   if (!found) notFound();
   const { category, service } = found;
 

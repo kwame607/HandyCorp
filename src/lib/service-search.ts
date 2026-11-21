@@ -1,4 +1,4 @@
-import { categories, type Category, type Service } from "@/data/services";
+import type { Category, Service } from "@/data/services";
 
 export type ServiceHit = { category: Category; service: Service };
 
@@ -16,7 +16,7 @@ function normalise(text: string): string {
  * Every word typed must appear somewhere in the item, so "phone repair"
  * finds "Mobile phone repairs". Swap this for a database query later.
  */
-export function searchCatalog(query: string): SearchResult {
+export function searchCatalog(categories: Category[], query: string): SearchResult {
   const tokens = normalise(query).split(" ").filter((t) => t.length >= 2);
   if (tokens.length === 0) return { services: [], categories: [] };
 

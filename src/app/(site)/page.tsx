@@ -1,5 +1,6 @@
 import HeroVisual from "@/components/HeroVisual";
 import SearchBox from "@/components/SearchBox";
+import { getCatalogue } from "@/lib/catalogue";
 import {
   HowItWorks,
   PopularServices,
@@ -7,7 +8,8 @@ import {
   Trust,
 } from "@/components/Sections";
 
-export default function Home() {
+export default async function Home() {
+  const { categories, areas } = await getCatalogue();
   return (
     <main>
       <section className="mx-auto max-w-6xl px-5 pb-16 pt-12 md:pb-24 md:pt-16">
@@ -38,11 +40,11 @@ export default function Home() {
           className="hero-rise mt-10 md:mt-14 lg:max-w-4xl"
           style={{ animationDelay: "0.2s" }}
         >
-          <SearchBox />
+          <SearchBox categories={categories} areas={areas} />
         </div>
       </section>
 
-      <PopularServices />
+      <PopularServices categories={categories} />
       <HowItWorks />
       <Trust />
       <ProfessionalCTA />

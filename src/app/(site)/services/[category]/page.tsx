@@ -2,21 +2,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Breadcrumb from "@/components/services/Breadcrumb";
 import { ArrowIcon } from "@/components/icons";
-import { categories, getCategory, serviceHref } from "@/data/services";
+import { getCategory, serviceHref } from "@/data/services";
+import { getCatalogue } from "@/lib/catalogue";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const { categories } = await getCatalogue();
   return categories.map((c) => ({ category: c.slug }));
 }
 
 export async function generateMetadata(props: PageProps<"/services/[category]">) {
   const { category } = await props.params;
-  const found = getCategory(category);
+  const { categories } = await getCatalogue();
+  const found = getCategory(categories, category);
   return { title: found ? `${found.name} | HandyCorp` : "Services | HandyCorp" };
 }
 
 export default async function CategoryPage(props: PageProps<"/services/[category]">) {
   const { category: slug } = await props.params;
-  const category = getCategory(slug);
+  const { categories } = await getCatalogue();
+  const category = getCategory(categories, slug);
   if (!category) notFound();
 
   return (

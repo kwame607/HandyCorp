@@ -7,7 +7,8 @@ import DiscoverySteps from "@/components/services/DiscoverySteps";
 import PopularServiceLinks from "@/components/services/PopularServiceLinks";
 import ProfessionalPrompt from "@/components/services/ProfessionalPrompt";
 import SearchResults from "@/components/services/SearchResults";
-import { categories } from "@/data/services";
+import type { Category } from "@/data/services";
+import { getCatalogue } from "@/lib/catalogue";
 
 export const metadata: Metadata = {
   title: "Explore Services | HandyCorp",
@@ -17,6 +18,8 @@ export const metadata: Metadata = {
 
 const first = (v: string | string[] | undefined) =>
   (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
+
+type Lists = { categories: Category[]; areas: string[] };
 
 const searchProps = {
   variant: "directory",
@@ -30,8 +33,10 @@ const searchProps = {
 // same empty search bar, so nothing jumps when the real one streams in.
 async function SearchArea({
   searchParams,
+  lists,
 }: {
   searchParams: PageProps<"/services">["searchParams"];
+  lists: Lists;
 }) {
   const params = await searchParams;
   const q = first(params.q);
@@ -39,13 +44,15 @@ async function SearchArea({
 
   return (
     <>
-      <SearchBox {...searchProps} defaultService={q} defaultLocation={location} />
-      {q && <SearchResults query={q} location={location} />}
+      <SearchBox {...searchProps} {...lists} defaultService={q} defaultLocation={location} />
+      {q && <SearchResults all={lists.categories} query={q} location={location} />}
     </>
   );
 }
 
-export default function ServicesPage(props: PageProps<"/services">) {
+export default async function ServicesPage(props: PageProps<"/services">) {
+  const { categories, areas, popular } = await getCatalogue();
+  const lists = { categories, areas };
   return (
     <main>
       <section className="mx-auto w-full max-w-6xl px-5 pb-12 pt-8 md:pb-14 md:pt-10">
@@ -65,8 +72,8 @@ export default function ServicesPage(props: PageProps<"/services">) {
         </p>
 
         <div className="mt-8 max-w-5xl">
-          <Suspense fallback={<SearchBox {...searchProps} />}>
-            <SearchArea searchParams={props.searchParams} />
+          <Suspense fallback={<SearchBox {...searchProps} {...lists} />}>
+            <SearchArea searchParams={props.searchParams} lists={lists} />
           </Suspense>
         </div>
       </section>
@@ -91,7 +98,7 @@ export default function ServicesPage(props: PageProps<"/services">) {
         </div>
       </section>
 
-      <PopularServiceLinks />
+      <PopularServiceLinks categories={categories} popular={popular} />
       <DiscoverySteps />
       <ProfessionalPrompt />
     </main>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { categories } from "@/data/services";
+import type { Category } from "@/data/services";
 import CategoryIcon from "./CategoryIcon";
 import {
   ArrowIcon,
@@ -12,7 +12,7 @@ import {
   StarIcon,
 } from "./icons";
 
-export function PopularServices() {
+export function PopularServices({ categories }: { categories: Category[] }) {
   return (
     <section id="services" className="scroll-mt-20 py-20 md:py-28">
       <div className="mx-auto max-w-6xl px-5">

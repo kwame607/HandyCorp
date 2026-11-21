@@ -1,16 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { areas } from "@/data/areas";
-import { categories } from "@/data/services";
+import type { Category } from "@/data/services";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
-
-const serviceSuggestions = categories.flatMap((c) =>
-  c.services.map((s) => s.name),
-);
 
 
 type Props = {
+  categories: Category[];
+  areas: string[];
   /** "hero" is the rounded homepage bar; "directory" is the flatter bar used inside pages. */
   variant?: "hero" | "directory";
   servicePlaceholder?: string;
@@ -36,6 +33,8 @@ const styles = {
 } as const;
 
 export default function SearchBox({
+  categories,
+  areas,
   variant = "hero",
   servicePlaceholder = "What service do you need?",
   locationPlaceholder = "Enter your location",
@@ -50,6 +49,7 @@ export default function SearchBox({
   );
   const [status, setStatus] = useState("");
   const s = styles[variant];
+  const serviceSuggestions = categories.flatMap((c) => c.services.map((x) => x.name));
   const serviceList = `${idPrefix}-services`;
   const areaList = `${idPrefix}-areas`;
 
