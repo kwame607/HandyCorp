@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import {
   submitApplication,
   type ApplicationState,
@@ -30,13 +30,26 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 
 export default function ApplicationForm({ open }: { open: boolean }) {
   const [state, action, pending] = useActionState(submitApplication, initial);
+  const feedbackRef = useRef<HTMLDivElement>(null);
+
+  // The form is long and the result appears at the top, so bring it into view.
+  useEffect(() => {
+    if (state.status === "idle") return;
+    feedbackRef.current?.scrollIntoView({ block: "center" });
+    feedbackRef.current?.focus({ preventScroll: true });
+  }, [state]);
   const errors = state.errors ?? {};
   const v: Partial<ApplicationValues> = state.values ?? {};
   const hasErrors = state.status === "invalid";
 
   if (state.status === "received") {
     return (
-      <div role="status" className="rounded-lg border border-line bg-white p-8">
+      <div
+        ref={feedbackRef}
+        tabIndex={-1}
+        role="status"
+        className="rounded-lg border border-line bg-white p-8 focus:outline-none"
+      >
         <h3 className="font-display text-2xl font-bold">Application received</h3>
         <p className="mt-3 max-w-md leading-relaxed text-slate">
           Thank you. We&apos;ll review your details and contact you on the phone
@@ -59,27 +72,36 @@ export default function ApplicationForm({ open }: { open: boolean }) {
         </div>
       )}
 
-      {hasErrors && (
-        <div
-          role="alert"
-          className="rounded-md border border-[#b3261e] bg-[#fdf0ee] p-4 text-[15px] font-medium text-[#b3261e]"
-        >
-          Some answers need fixing. Check the fields marked below.
-        </div>
-      )}
+      {state.status !== "idle" && (
+        <div ref={feedbackRef} tabIndex={-1} className="space-y-4 focus:outline-none">
+          {hasErrors && (
+            <div
+              role="alert"
+              className="rounded-md border border-[#b3261e] bg-[#fdf0ee] p-4 text-[15px] font-medium text-[#b3261e]"
+            >
+              Some answers need fixing. Check the fields marked below.
+            </div>
+          )}
 
-      {state.status === "preview" && (
-        <div role="status" className="rounded-md border border-line bg-white p-5">
-          <p className="font-display text-lg font-bold">Your answers look complete.</p>
-          <p className="mt-1 leading-relaxed text-slate">
-            Nothing was saved, because applications aren&apos;t open yet.
-          </p>
-        </div>
-      )}
+          {state.status === "preview" && (
+            <div role="status" className="rounded-md border border-line bg-white p-5">
+              <p className="font-display text-lg font-bold">
+                Your answers look complete, but nothing was saved.
+              </p>
+              <p className="mt-1 leading-relaxed text-slate">
+                Applications aren&apos;t open yet, so this form is a preview.
+              </p>
+            </div>
+          )}
 
-      {state.status === "error" && (
-        <div role="alert" className="rounded-md border border-[#b3261e] bg-[#fdf0ee] p-4 text-[15px] font-medium text-[#b3261e]">
-          {state.message}
+          {state.status === "error" && (
+            <div
+              role="alert"
+              className="rounded-md border border-[#b3261e] bg-[#fdf0ee] p-4 text-[15px] font-medium text-[#b3261e]"
+            >
+              {state.message}
+            </div>
+          )}
         </div>
       )}
 

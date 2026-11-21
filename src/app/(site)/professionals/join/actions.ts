@@ -34,6 +34,9 @@ export async function submitApplication(
 
   // Launch switch: until APPLICATIONS_ENABLED=true the form only previews.
   if (process.env.APPLICATIONS_ENABLED !== "true") {
+    console.info(
+      "[applications] Preview only: APPLICATIONS_ENABLED is not 'true' (restart the dev server after editing .env.local). Nothing saved.",
+    );
     return { status: "preview", values };
   }
 
@@ -50,12 +53,16 @@ export async function submitApplication(
       p_area_slugs: values.areas.map(areaSlug),
     });
     if (error) {
-      // Log the code only. Never log applicant details.
-      console.error("submit_professional_application failed:", error.code);
-      throw new Error(error.code);
+      // Message and code only. Never log applicant details.
+      throw new Error(`${error.code || "no code"}: ${error.message}`);
     }
+    console.info("[applications] Saved to Supabase.");
     return { status: "received" };
-  } catch {
+  } catch (e) {
+    console.error(
+      "[applications] Could not save:",
+      e instanceof Error ? e.message : "unknown error",
+    );
     return {
       status: "error",
       values,
