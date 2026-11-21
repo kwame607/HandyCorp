@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { areas } from "@/data/areas";
 import { categories } from "@/data/services";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
 
@@ -8,8 +9,6 @@ const serviceSuggestions = categories.flatMap((c) =>
   c.services.map((s) => s.name),
 );
 
-// Initial launch areas from the proposal; final coverage is still to be confirmed.
-const areas = ["Ahodwo", "Asokwa", "Adum", "Bantama", "KNUST area"];
 
 type Props = {
   /** "hero" is the rounded homepage bar; "directory" is the flatter bar used inside pages. */
