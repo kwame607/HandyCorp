@@ -161,3 +161,14 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect(role === "professional" ? "/professional/login" : "/");
 }
+
+// A signed-in customer continues as a professional. The database only allows customer -> professional.
+export async function becomeProfessional() {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("become_professional");
+  if (error) {
+    console.error("[auth] become_professional failed:", error.code || "no code");
+    redirect("/professional/signup?error=1");
+  }
+  redirect("/professional/onboarding");
+}
