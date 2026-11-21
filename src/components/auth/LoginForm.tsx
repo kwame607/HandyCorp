@@ -5,7 +5,7 @@ import { useActionState } from "react";
 import { signIn, type AuthState } from "@/app/(site)/(auth)/actions";
 import { FormAlert, PasswordField, SubmitButton, TextField } from "./fields";
 
-export default function LoginForm({ audience, next }: { audience: "customer" | "professional"; next: string }) {
+export default function LoginForm({ audience, next }: { audience: "customer" | "professional" | "admin"; next: string }) {
   const [state, action, pending] = useActionState<AuthState, FormData>(signIn, { status: "idle" });
   const e = state.errors ?? {};
   return (

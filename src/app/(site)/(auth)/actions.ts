@@ -35,7 +35,8 @@ export async function signIn(_: AuthState, f: FormData): Promise<AuthState> {
   const email = text(f, "email").toLowerCase();
   const password = String(f.get("password") ?? "");
   const next = text(f, "next");
-  const audience = text(f, "audience") === "professional" ? "professional" : "customer";
+  const a = text(f, "audience");
+  const audience: "professional" | "customer" | "admin" = a === "professional" ? "professional" : a === "admin" ? "admin" : "customer";
   const values = { email, next };
   const errors: AuthState["errors"] = {};
   if (!validEmail(email)) errors.email = "Enter the email address you signed up with.";
@@ -59,10 +60,21 @@ export async function signIn(_: AuthState, f: FormData): Promise<AuthState> {
       },
     };
   }
-  const role = await profileRole(supabase);
+  const { data: claims } = await supabase.auth.getClaims();
+  const { data: me } = await supabase.from("profiles").select("role, status").eq("id", claims?.claims?.sub ?? "").maybeSingle();
+  const role = (me?.role as Role | undefined) ?? null;
   if (!role) {
     await supabase.auth.signOut();
     return { status: "error", values, errors: { form: "We couldn't load your account. Please try again." } };
+  }
+  if (me?.status === "suspended") {
+    await supabase.auth.signOut();
+    return { status: "error", values, errors: { form: "This account has been suspended. Please contact HandyCorp support." } };
+  }
+  if (audience === "admin" && role !== "admin") {
+    // Administration is only for administrators. Customers and professionals can't use this page.
+    await supabase.auth.signOut();
+    return { status: "error", values, errors: { form: "The email or password is incorrect." } };
   }
   // Each person lands where their role belongs. A saved page is only used for the matching role.
   const matches = role === audience;
@@ -159,7 +171,7 @@ export async function signOut() {
   const supabase = await createClient();
   const role = await profileRole(supabase);
   await supabase.auth.signOut();
-  redirect(role === "professional" ? "/professional/login" : "/");
+  redirect(role === "professional" ? "/professional/login" : role === "admin" ? "/admin/login" : "/");
 }
 
 // A signed-in customer continues as a professional. The database only allows customer -> professional.

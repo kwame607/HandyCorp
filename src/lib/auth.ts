@@ -15,7 +15,7 @@ export type CurrentUser = {
 export function safeNext(value: unknown, fallback = "/"): string {
   if (typeof value !== "string") return fallback;
   if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return fallback;
-  if (/^\/(login|signup|professional\/(login|signup)|forgot-password|reset-password|auth)(\/|\?|$)/.test(value)) {
+  if (/^\/(login|signup|admin\/login|professional\/(login|signup)|forgot-password|reset-password|auth)(\/|\?|$)/.test(value)) {
     return fallback;
   }
   return value;
@@ -37,10 +37,11 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!id) return null;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, phone")
+    .select("role, full_name, phone, status")
     .eq("id", id)
     .maybeSingle();
-  if (!profile) return null;
+  // Suspended accounts are treated as signed out everywhere.
+  if (!profile || profile.status === "suspended") return null;
   return {
     id,
     email: claims.claims.email as string | undefined,

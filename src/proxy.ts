@@ -30,10 +30,11 @@ export async function proxy(request: NextRequest) {
 
   if (!signedIn) {
     const pro = path.startsWith("/professional/dashboard") || path.startsWith("/professional/onboarding");
-    const customer = path.startsWith("/account") || path.startsWith("/admin");
-    if (pro || customer) {
+    const admin = path.startsWith("/admin") && path !== "/admin/login";
+    const customer = path.startsWith("/account");
+    if (pro || customer || admin) {
       const to = request.nextUrl.clone();
-      to.pathname = pro ? "/professional/login" : "/login";
+      to.pathname = admin ? "/admin/login" : pro ? "/professional/login" : "/login";
       to.search = `?next=${encodeURIComponent(path + request.nextUrl.search)}`;
       return NextResponse.redirect(to);
     }
