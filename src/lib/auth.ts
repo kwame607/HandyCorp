@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type Role = "customer" | "professional" | "admin";
@@ -28,6 +29,8 @@ export function homeFor(role: Role): string {
 
 // The role comes from the database (public.profiles), never from the token metadata.
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  // Checking a sign-in compares token times with the clock, so this must run per request.
+  await connection();
   const supabase = await createClient();
   const { data: claims } = await supabase.auth.getClaims();
   const id = claims?.claims?.sub;

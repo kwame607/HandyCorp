@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 
@@ -8,6 +9,8 @@ export type NavUser = { role: "customer" | "professional" | "admin"; name: strin
 // For showing the right header links only. Real access checks happen on the server.
 export function useAuthState(): NavUser {
   const [user, setUser] = useState<NavUser>(undefined);
+  // Sign-in happens on the server, so check again whenever the page changes.
+  const pathname = usePathname();
   useEffect(() => {
     let alive = true;
     let unsubscribe = () => {};
@@ -20,10 +23,11 @@ export function useAuthState(): NavUser {
         return;
       }
       const load = async () => {
-        const { data } = await supabase.auth.getUser();
+        const { data } = await supabase.auth.getSession();
         if (!alive) return;
-        if (!data.user) return setUser(null);
-        const { data: p } = await supabase.from("profiles").select("role, full_name").eq("id", data.user.id).maybeSingle();
+        const uid = data.session?.user.id;
+        if (!uid) return setUser(null);
+        const { data: p } = await supabase.from("profiles").select("role, full_name").eq("id", uid).maybeSingle();
         if (alive) setUser(p ? { role: p.role, name: p.full_name } : null);
       };
       await load();
@@ -37,6 +41,6 @@ export function useAuthState(): NavUser {
       alive = false;
       unsubscribe();
     };
-  }, []);
+  }, [pathname]);
   return user;
 }

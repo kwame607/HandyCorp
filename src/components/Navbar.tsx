@@ -52,7 +52,9 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          {user ? (
+          {user === undefined ? (
+            <span className="h-10 w-48" aria-hidden="true" />
+          ) : user ? (
             <>
               <Link href={home} className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5">
                 {user.role === "professional" ? "Dashboard" : "My Account"}
