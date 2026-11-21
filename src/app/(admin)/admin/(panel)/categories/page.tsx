@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
 import { Card, inputCls, Notice, PageHeader } from "@/components/admin/ui";
 import { str } from "@/lib/admin";
@@ -6,7 +7,7 @@ import { addService, createCategory, setCategoryActive, setServiceActive, update
 
 export const metadata = { title: "Service Categories | HandyCorp Admin" };
 
-export default async function Page({ searchParams }: PageProps<"/admin/categories">) {
+async function Body({ searchParams }: PageProps<"/admin/categories">) {
   const sp = await searchParams;
   const supabase = await createClient();
   const [{ data: cats }, { data: svcs }, { data: counts }] = await Promise.all([
@@ -98,5 +99,13 @@ export default async function Page({ searchParams }: PageProps<"/admin/categorie
         })}
       </div>
     </>
+  );
+}
+
+export default function Page(props: PageProps<"/admin/categories">) {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body {...props} />
+    </Suspense>
   );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
@@ -8,7 +9,7 @@ import { setAccountStatus } from "../../../actions";
 
 export const metadata = { title: "Customer | HandyCorp Admin" };
 
-export default async function Page({ params, searchParams }: PageProps<"/admin/customers/[id]">) {
+async function Body({ params, searchParams }: PageProps<"/admin/customers/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
@@ -91,5 +92,13 @@ export default async function Page({ params, searchParams }: PageProps<"/admin/c
         )}
       </Card>
     </>
+  );
+}
+
+export default function Page(props: PageProps<"/admin/customers/[id]">) {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body {...props} />
+    </Suspense>
   );
 }

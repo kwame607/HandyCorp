@@ -1,10 +1,11 @@
+import { Suspense } from "react";
 import { Card, NotConnected, PageHeader } from "@/components/admin/ui";
 import { createClient } from "@/lib/supabase/server";
 import { requireRole } from "@/lib/auth";
 
 export const metadata = { title: "Settings | HandyCorp Admin" };
 
-export default async function Page() {
+async function Body() {
   const user = await requireRole("admin", "/admin/login", "/admin/settings");
   const supabase = await createClient();
   const { data: areas } = await supabase.from("areas").select("name, city, is_active").order("sort_order");
@@ -33,5 +34,13 @@ export default async function Page() {
         </Card>
       </div>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body />
+    </Suspense>
   );
 }

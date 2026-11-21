@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
@@ -12,7 +13,7 @@ export const metadata = { title: "Professional | HandyCorp Admin" };
 const kindLabel: Record<string, string> = { profile_photo: "Profile photo", portfolio: "Work photo", certificate: "Certificate" };
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
-export default async function Page({ params, searchParams }: PageProps<"/admin/professionals/[id]">) {
+async function Body({ params, searchParams }: PageProps<"/admin/professionals/[id]">) {
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
@@ -161,5 +162,13 @@ export default async function Page({ params, searchParams }: PageProps<"/admin/p
         </div>
       </div>
     </>
+  );
+}
+
+export default function Page(props: PageProps<"/admin/professionals/[id]">) {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body {...props} />
+    </Suspense>
   );
 }

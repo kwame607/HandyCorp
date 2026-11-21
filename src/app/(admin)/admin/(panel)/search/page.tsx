@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { Card, Empty, PageHeader, StatusBadge } from "@/components/admin/ui";
 import { type CustomerRow, type ProRow, str } from "@/lib/admin";
@@ -5,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Search | HandyCorp Admin" };
 
-export default async function Page({ searchParams }: PageProps<"/admin/search">) {
+async function Body({ searchParams }: PageProps<"/admin/search">) {
   const q = str((await searchParams).q);
   const supabase = await createClient();
   const [c, p] = q
@@ -57,5 +58,13 @@ export default async function Page({ searchParams }: PageProps<"/admin/search">)
         )}
       </div>
     </>
+  );
+}
+
+export default function Page(props: PageProps<"/admin/search">) {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body {...props} />
+    </Suspense>
   );
 }

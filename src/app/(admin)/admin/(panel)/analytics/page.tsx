@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { connection } from "next/server";
 import { Card, NotConnected, PageHeader } from "@/components/admin/ui";
 import { msNow } from "@/lib/admin";
@@ -21,7 +22,7 @@ function Bars({ rows }: { rows: [string, number][] }) {
   );
 }
 
-export default async function Page() {
+async function Body() {
   await connection();
   const supabase = await createClient();
   const startMs = msNow() - 8 * week;
@@ -62,5 +63,13 @@ export default async function Page() {
         </Card>
       </div>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body />
+    </Suspense>
   );
 }

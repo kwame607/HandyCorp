@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Icon } from "@/components/admin/icons";
@@ -8,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Overview | HandyCorp Admin" };
 
-export default async function Page() {
+async function Body() {
   await connection();
   const supabase = await createClient();
   const d30 = daysAgoISO(30);
@@ -115,5 +116,13 @@ export default async function Page() {
         </Card>
       </div>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body />
+    </Suspense>
   );
 }

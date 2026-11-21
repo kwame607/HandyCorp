@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Card, Empty, NotConnected, PageHeader, Table, Td, Th } from "@/components/admin/ui";
 import { type AdminRow, actionLabels, fmtDateTime } from "@/lib/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ const roles = [
   ["Finance Officer", "Payment records and permitted financial actions."],
 ];
 
-export default async function Page() {
+async function Body() {
   const supabase = await createClient();
   const [{ data: admins }, { data: log }] = await Promise.all([
     supabase.rpc("admin_list_admins"),
@@ -67,5 +68,13 @@ export default async function Page() {
         </Table>
       )}
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<p className="text-slate">Loading…</p>}>
+      <Body />
+    </Suspense>
   );
 }
