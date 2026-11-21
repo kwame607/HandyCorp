@@ -23,7 +23,7 @@ export function safeNext(value: unknown, fallback = "/"): string {
 
 export function homeFor(role: Role): string {
   if (role === "professional") return "/professional/dashboard";
-  if (role === "admin") return "/account";
+  if (role === "admin") return "/admin";
   return "/account";
 }
 

@@ -30,7 +30,7 @@ export async function proxy(request: NextRequest) {
 
   if (!signedIn) {
     const pro = path.startsWith("/professional/dashboard") || path.startsWith("/professional/onboarding");
-    const customer = path.startsWith("/account");
+    const customer = path.startsWith("/account") || path.startsWith("/admin");
     if (pro || customer) {
       const to = request.nextUrl.clone();
       to.pathname = pro ? "/professional/login" : "/login";
