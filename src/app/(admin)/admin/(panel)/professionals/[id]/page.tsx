@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -16,6 +17,7 @@ const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? nu
 
 async function Body({ params, searchParams }: PageProps<"/admin/professionals/[id]">) {
   await connection();
+  await requirePermission("professionals.view", "/admin/professionals");
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();

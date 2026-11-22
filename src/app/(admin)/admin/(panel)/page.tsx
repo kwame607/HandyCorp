@@ -3,14 +3,21 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Icon } from "@/components/admin/icons";
 import { BookingActivity, RevenueChart } from "@/components/admin/SampleCharts";
-import { Card, NotConnected, PageHeader, SampleTag, StatusBadge } from "@/components/admin/ui";
+import { Card, NotConnected, Notice, PageHeader, SampleTag, StatusBadge } from "@/components/admin/ui";
 import { actionLabels, daysAgoISO, fmtDate, fmtDateTime } from "@/lib/admin";
+import { requireRole } from "@/lib/auth";
+import { can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Overview | HandyCorp Admin" };
 
-async function Body() {
+async function Body({ searchParams }: PageProps<"/admin">) {
   await connection();
+  const user = await requireRole("admin", "/admin/login", "/admin");
+  const sp = await searchParams;
+  const seeCustomers = can(user.staffRole, "customers.view");
+  const seePros = can(user.staffRole, "professionals.view");
+  const seeLog = can(user.staffRole, "audit.view");
   const supabase = await createClient();
   const d30 = daysAgoISO(30);
   const d60 = daysAgoISO(60);
@@ -47,27 +54,32 @@ async function Body() {
   return (
     <>
       <PageHeader title="Overview" text="Here's what's happening across HandyCorp." />
+      {sp.denied && <Notice tone="error">Your role doesn&apos;t include that page.</Notice>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {stat("customers", "Total Customers", String(cust.count ?? 0), `${c30} joined in the last 30 days (${delta >= 0 ? "+" : ""}${delta} vs the 30 days before)`)}
-        {stat("professionals", "Active Professionals", String(active.count ?? 0), `${pros.count ?? 0} registered in total`)}
+        {seeCustomers ? stat("customers", "Total Customers", String(cust.count ?? 0), `${c30} joined in the last 30 days (${delta >= 0 ? "+" : ""}${delta} vs the 30 days before)`) : stat("customers", "Total Customers", "—", "Not part of your role", true)}
+        {seePros ? stat("professionals", "Active Professionals", String(active.count ?? 0), `${pros.count ?? 0} registered in total`) : stat("professionals", "Active Professionals", "—", "Not part of your role", true)}
         {stat("requests", "Total Service Requests", "—", "Starts counting when booking opens", true)}
         {stat("bookings", "Completed Bookings", "—", "Starts counting when booking opens", true)}
         {stat("payments", "Platform Revenue", "—", "Starts counting when payments are connected", true)}
-        {stat("staff", "Pending Verifications", String(pending.count ?? 0), (pending.count ?? 0) > 0 ? "Waiting for a decision" : "Nothing waiting")}
+        {seePros ? stat("staff", "Pending Verifications", String(pending.count ?? 0), (pending.count ?? 0) > 0 ? "Waiting for a decision" : "Nothing waiting") : stat("staff", "Pending Verifications", "—", "Not part of your role", true)}
       </div>
 
       <section aria-labelledby="attention" className="mt-6 rounded-md border border-gold-deep bg-[#fff9e8] p-5">
         <h2 id="attention" className="font-display text-base font-bold">Needs your attention</h2>
         <ul className="mt-3 grid gap-x-8 gap-y-2 text-[15px] sm:grid-cols-2">
-          <li className="flex justify-between gap-4">
-            <Link href="/admin/professionals?status=submitted" className="underline underline-offset-4">Professionals awaiting verification</Link>
-            <strong>{pending.count ?? 0}</strong>
-          </li>
-          <li className="flex justify-between gap-4">
-            <Link href="/admin/professionals/requests" className="underline underline-offset-4">Requests for more work</Link>
-            <strong>{workReqs.count ?? 0}</strong>
-          </li>
+          {seePros && (
+            <>
+              <li className="flex justify-between gap-4">
+                <Link href="/admin/professionals?status=submitted" className="underline underline-offset-4">Professionals awaiting verification</Link>
+                <strong>{pending.count ?? 0}</strong>
+              </li>
+              <li className="flex justify-between gap-4">
+                <Link href="/admin/professionals/requests" className="underline underline-offset-4">Requests for more work</Link>
+                <strong>{workReqs.count ?? 0}</strong>
+              </li>
+            </>
+          )}
           {["Unresolved disputes", "Failed payments", "Customer complaints", "Pending refunds"].map((l) => (
             <li key={l} className="flex justify-between gap-4 text-slate"><span>{l}</span><span>Not connected</span></li>
           ))}
@@ -86,7 +98,7 @@ async function Body() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <Card title="Recent professional registrations" right={<Link href="/admin/professionals" className="text-sm underline underline-offset-4">View all</Link>}>
+        {seePros && <Card title="Recent professional registrations" right={<Link href="/admin/professionals" className="text-sm underline underline-offset-4">View all</Link>}>
           {!regs.data?.length ? (
             <NotConnected>No registrations yet.</NotConnected>
           ) : (
@@ -104,8 +116,8 @@ async function Body() {
               ))}
             </ul>
           )}
-        </Card>
-        <Card title="Recent admin actions" right={<Link href="/admin/staff" className="text-sm underline underline-offset-4">Audit log</Link>}>
+        </Card>}
+        {seeLog && <Card title="Recent admin actions" right={<Link href="/admin/staff" className="text-sm underline underline-offset-4">Audit log</Link>}>
           {!audit.data?.length ? (
             <NotConnected>No admin actions recorded yet.</NotConnected>
           ) : (
@@ -118,16 +130,16 @@ async function Body() {
               ))}
             </ul>
           )}
-        </Card>
+        </Card>}
       </div>
     </>
   );
 }
 
-export default function Page() {
+export default function Page(props: PageProps<"/admin">) {
   return (
     <Suspense fallback={<p className="text-slate">Loading…</p>}>
-      <Body />
+      <Body {...props} />
     </Suspense>
   );
 }

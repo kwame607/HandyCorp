@@ -1,22 +1,21 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { Card, Empty, NotConnected, PageHeader, Table, Td, Th } from "@/components/admin/ui";
-import { type AdminRow, actionLabels, fmtDateTime } from "@/lib/admin";
+import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
+import { Card, Empty, inputCls, Notice, PageHeader, Table, Td, Th } from "@/components/admin/ui";
+import { setStaffRole } from "../../actions";
+import { type AdminRow, actionLabels, fmtDateTime, str } from "@/lib/admin";
+import { roleLabel, staffRoles } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Staff & Permissions | HandyCorp Admin" };
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
-const roles = [
-  ["Super Administrator", "Everything, including staff and critical settings."],
-  ["Operations Manager", "Customers, professionals, requests and bookings."],
-  ["Verification Officer", "Review professional documents and verification decisions."],
-  ["Customer Support", "Complaints, disputes and messages."],
-  ["Finance Officer", "Payment records and permitted financial actions."],
-];
-
-async function Body() {
+async function Body({ searchParams }: PageProps<"/admin/staff">) {
   await connection();
+  await requirePermission("staff.manage", "/admin/staff");
+  const sp = await searchParams;
+  const err = str(sp.error);
   const supabase = await createClient();
   const [{ data: admins }, { data: log }] = await Promise.all([
     supabase.rpc("admin_list_admins"),
@@ -24,26 +23,51 @@ async function Body() {
   ]);
   return (
     <>
-      <PageHeader title="Staff & Permissions" text="Who can use the admin panel, and a record of what they did." />
+      <PageHeader title="Staff & Permissions" text="Who can use the admin panel, what each person may do, and a record of what they did." />
+      {sp.saved && <Notice tone="ok">Saved.</Notice>}
+      {err && <Notice tone="error">{err === "1" ? "Something went wrong. Please try again." : err}</Notice>}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Administrators">
+        <Card title="Staff">
           {!admins?.length ? <p className="text-slate">None.</p> : (
             <ul className="divide-y divide-line">
               {(admins as AdminRow[]).map((a) => (
-                <li key={a.id} className="py-2.5">
-                  <p className="font-medium">{a.full_name}</p>
+                <li key={a.id} className="py-3">
+                  <p className="font-medium">{a.full_name} <span className="ml-1 rounded bg-ink/5 px-2 py-0.5 text-sm font-normal">{roleLabel(a.staff_role)}</span></p>
                   <p className="break-all text-sm text-slate">{a.email} · last signed in {fmtDateTime(a.last_sign_in_at)}</p>
+                  <form action={setStaffRole} className="mt-2 flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="email" value={a.email} />
+                    <label htmlFor={`r-${a.id}`} className="sr-only">Role for {a.full_name}</label>
+                    <select id={`r-${a.id}`} name="role" defaultValue={a.staff_role} className={`w-auto ${inputCls}`}>
+                      {staffRoles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+                    </select>
+                    <button className="rounded-md border border-ink/30 px-3 py-2 text-[15px] font-semibold hover:bg-ink/5">Change role</button>
+                    <ConfirmSubmit label="Remove access" tone="danger" name="remove" value="1" title={`Remove ${a.full_name}'s admin access?`} message="They will no longer be able to open the admin panel. Their customer or professional account stays." />
+                  </form>
                 </li>
               ))}
             </ul>
           )}
-          <p className="mt-4 text-sm text-slate">To add an administrator, turn on <code>is_admin</code> for their row in the <code>profiles</code> table in Supabase. They can keep any customer or professional role too. Admin sign-up is never public.</p>
+          <form action={setStaffRole} className="mt-6 space-y-3 border-t border-line pt-5">
+            <h3 className="font-display text-base font-bold">Give someone a role</h3>
+            <p className="text-sm text-slate">They must already have a HandyCorp account. Admin sign-up is never public. You can&apos;t change your own role.</p>
+            <div>
+              <label htmlFor="email" className="text-sm font-medium">Their account email</label>
+              <input id="email" name="email" type="email" required className={`mt-1 ${inputCls}`} />
+            </div>
+            <div>
+              <label htmlFor="role" className="text-sm font-medium">Role</label>
+              <select id="role" name="role" defaultValue="customer_support" className={`mt-1 ${inputCls}`}>
+                {staffRoles.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
+              </select>
+            </div>
+            <button className="rounded-md bg-gold px-5 py-2.5 font-bold hover:bg-gold-deep">Give role</button>
+          </form>
         </Card>
-        <Card title="Roles (planned)">
-          <NotConnected>Today every administrator has full access. Role-based permissions are the next step before you add other staff.</NotConnected>
-          <ul className="mt-4 divide-y divide-line">
-            {roles.map(([n, d]) => <li key={n} className="py-2"><p className="font-medium">{n}</p><p className="text-sm text-slate">{d}</p></li>)}
+        <Card title="What each role can do">
+          <ul className="divide-y divide-line">
+            {staffRoles.map((r) => <li key={r.value} className="py-2.5"><p className="font-medium">{r.label}</p><p className="text-sm text-slate">{r.text}</p></li>)}
           </ul>
+          <p className="mt-3 text-sm text-slate">These limits are enforced by the database, not just hidden in the menu.</p>
         </Card>
       </div>
 
@@ -73,10 +97,10 @@ async function Body() {
   );
 }
 
-export default function Page() {
+export default function Page(props: PageProps<"/admin/staff">) {
   return (
     <Suspense fallback={<p className="text-slate">Loading…</p>}>
-      <Body />
+      <Body {...props} />
     </Suspense>
   );
 }

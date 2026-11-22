@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { type Permission, type StaffRole, can } from "@/lib/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 export type Role = "customer" | "professional";
@@ -10,6 +11,7 @@ export type CurrentUser = {
   email: string | undefined;
   role: Role;
   isAdmin: boolean;
+  staffRole: StaffRole | null;
   fullName: string;
   phone: string | null;
 };
@@ -39,7 +41,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!id) return null;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, is_admin, full_name, phone, status")
+    .select("role, is_admin, staff_role, full_name, phone, status")
     .eq("id", id)
     .maybeSingle();
   // Suspended accounts are treated as signed out everywhere.
@@ -49,6 +51,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     email: claims.claims.email as string | undefined,
     role: profile.role as Role,
     isAdmin: profile.is_admin === true,
+    staffRole: profile.is_admin === true ? ((profile.staff_role as StaffRole | null) ?? "super_admin") : null,
     fullName: profile.full_name,
     phone: profile.phone,
   };
@@ -58,5 +61,13 @@ export async function requireRole(role: Need, loginPath: string, next: string): 
   const user = await getCurrentUser();
   if (!user) redirect(`${loginPath}?next=${encodeURIComponent(next)}`);
   if (role === "admin" ? !user.isAdmin : user.role !== role) redirect(homeFor(user.role));
+  return user;
+}
+
+// Admin pages call this first. Staff without the permission go back to the overview.
+// The database checks the same permission again on every read and change.
+export async function requirePermission(permission: Permission, next = "/admin"): Promise<CurrentUser> {
+  const user = await requireRole("admin", "/admin/login", next);
+  if (!can(user.staffRole, permission)) redirect("/admin?denied=1");
   return user;
 }

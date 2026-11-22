@@ -22,7 +22,7 @@ function done(path: string, ok: boolean, msg?: string): never {
 }
 
 const friendly = (m?: string) =>
-  m && /reason is required/i.test(m) ? "Please write a reason." : m && /cannot be changed/i.test(m) ? "Administrator accounts can't be changed here." : m && /2 to 80/.test(m) ? "Names must be 2 to 80 characters." : "Something went wrong. Please try again.";
+  m && /not allowed/i.test(m) ? "Your role doesn't allow this." : m && /reason is required/i.test(m) ? "Please write a reason." : m && /cannot be changed/i.test(m) ? "Administrator accounts can't be changed here." : m && /2 to 80/.test(m) ? "Names must be 2 to 80 characters." : "Something went wrong. Please try again.";
 
 export async function setProfessionalStatus(f: FormData) {
   const id = field(f, "id");
@@ -114,4 +114,13 @@ export async function setAreaActive(f: FormData) {
   const { error } = await supabase.rpc("admin_set_area_active", { p_id: id, p_active: field(f, "active") === "true" });
   if (error) console.error("[admin] area status failed:", error.code || "no code");
   done("/admin/areas", !error, "Something went wrong. Please try again.");
+}
+
+export async function setStaffRole(f: FormData) {
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_set_staff_role", { p_email: field(f, "email"), p_role: field(f, "remove") ? "none" : field(f, "role") });
+  if (error) console.error("[admin] staff role failed:", error.code || "no code");
+  const m = error?.message ?? "";
+  const msg = /No account/i.test(m) ? "No account has that email. They need to sign up first." : /your own role/i.test(m) ? "You can't change your own role." : /one Super/i.test(m) ? "There must always be one Super Administrator." : /not allowed/i.test(m) ? "Only a Super Administrator can do this." : "Something went wrong. Please try again.";
+  done("/admin/staff", !error, msg);
 }

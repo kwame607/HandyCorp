@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -9,6 +10,7 @@ export const metadata = { title: "Dashboard preview | HandyCorp Admin" };
 
 async function Body({ params }: { params: PageProps<"/admin/professionals/[id]/preview">["params"] }) {
   await connection();
+  await requirePermission("professionals.view", "/admin/professionals");
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
   const supabase = await createClient();

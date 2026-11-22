@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Fragment, Suspense } from "react";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
@@ -11,6 +12,7 @@ export const metadata = { title: "Areas | HandyCorp Admin" };
 
 async function Body({ searchParams }: PageProps<"/admin/areas">) {
   await connection();
+  await requirePermission("catalogue.manage", "/admin/areas");
   const sp = await searchParams;
   const q = str(sp.q).toLowerCase();
   const supabase = await createClient();

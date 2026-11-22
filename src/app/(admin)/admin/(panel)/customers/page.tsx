@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -9,6 +10,7 @@ export const metadata = { title: "Customers | HandyCorp Admin" };
 
 async function Body({ searchParams }: PageProps<"/admin/customers">) {
   await connection();
+  await requirePermission("customers.view", "/admin/customers");
   const sp = await searchParams;
   const page = pageOf(sp);
   const supabase = await createClient();

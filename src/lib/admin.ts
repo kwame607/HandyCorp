@@ -35,6 +35,7 @@ export const actionLabels: Record<string, string> = {
   "category.deactivate": "Deactivated a category",
   "workrequest.approved": "Approved a request for more work",
   "workrequest.declined": "Declined a request for more work",
+  "staff.role": "Changed a staff role",
   "area.create": "Added an area",
   "area.activate": "Activated an area",
   "area.deactivate": "Hid an area",
@@ -52,4 +53,4 @@ export type ProRow = {
   user_id: string; full_name: string; display_name: string | null; email: string; phone: string | null; category: string;
   city: string; area: string; status: string; account_status: string; submitted_at: string; total: number;
 };
-export type AdminRow = { id: string; full_name: string; email: string; last_sign_in_at: string | null };
+export type AdminRow = { id: string; full_name: string; email: string; last_sign_in_at: string | null; staff_role: string };

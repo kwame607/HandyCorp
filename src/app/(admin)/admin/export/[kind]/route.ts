@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { CustomerRow, ProRow } from "@/lib/admin";
-import { requireRole } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 // Spreadsheet programs run text that starts with = + - @ as a formula, so defuse it.
@@ -12,7 +12,7 @@ const cell = (v: unknown) => {
 
 export async function GET(_: Request, ctx: RouteContext<"/admin/export/[kind]">) {
   const { kind } = await ctx.params;
-  await requireRole("admin", "/admin/login", `/admin/${kind}`);
+  await requirePermission(kind === "customers" ? "customers.view" : "professionals.view", `/admin/${kind}`);
   const supabase = await createClient();
   const lines: string[] = [];
 

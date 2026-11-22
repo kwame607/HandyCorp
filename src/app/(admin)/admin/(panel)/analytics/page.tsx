@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { Card, NotConnected, PageHeader } from "@/components/admin/ui";
@@ -24,6 +25,7 @@ function Bars({ rows }: { rows: [string, number][] }) {
 
 async function Body() {
   await connection();
+  await requirePermission("analytics.view", "/admin/analytics");
   const supabase = await createClient();
   const startMs = msNow() - 8 * week;
   const since = new Date(startMs).toISOString();

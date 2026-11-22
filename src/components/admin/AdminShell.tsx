@@ -4,38 +4,39 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "@/app/(site)/(auth)/actions";
+import type { Permission } from "@/lib/permissions";
 import { Icon } from "./icons";
 
-type Item = { href: string; label: string; icon: string };
+type Item = { href: string; label: string; icon: string; perm?: Permission };
 const groups: { label: string; items: Item[] }[] = [
   {
     label: "Main",
     items: [
       { href: "/admin", label: "Overview", icon: "overview" },
-      { href: "/admin/customers", label: "Customers", icon: "customers" },
-      { href: "/admin/professionals", label: "Professionals", icon: "professionals" },
-      { href: "/admin/categories", label: "Service Categories", icon: "categories" },
-      { href: "/admin/areas", label: "Areas", icon: "categories" },
-      { href: "/admin/requests", label: "Service Requests", icon: "requests" },
-      { href: "/admin/bookings", label: "Bookings", icon: "bookings" },
-      { href: "/admin/inspections", label: "Inspections & Quotations", icon: "inspections" },
-      { href: "/admin/support", label: "Messages & Support", icon: "support" },
-      { href: "/admin/reviews", label: "Reviews & Reports", icon: "reviews" },
+      { href: "/admin/customers", label: "Customers", icon: "customers", perm: "customers.view" },
+      { href: "/admin/professionals", label: "Professionals", icon: "professionals", perm: "professionals.view" },
+      { href: "/admin/categories", label: "Service Categories", icon: "categories", perm: "catalogue.manage" },
+      { href: "/admin/areas", label: "Areas", icon: "categories", perm: "catalogue.manage" },
+      { href: "/admin/requests", label: "Service Requests", icon: "requests", perm: "bookings.view" },
+      { href: "/admin/bookings", label: "Bookings", icon: "bookings", perm: "bookings.view" },
+      { href: "/admin/inspections", label: "Inspections & Quotations", icon: "inspections", perm: "bookings.view" },
+      { href: "/admin/support", label: "Messages & Support", icon: "support", perm: "support.view" },
+      { href: "/admin/reviews", label: "Reviews & Reports", icon: "reviews", perm: "support.view" },
     ],
   },
   {
     label: "Financial management",
     items: [
-      { href: "/admin/payments", label: "Payments", icon: "payments" },
-      { href: "/admin/commissions", label: "Commissions", icon: "commissions" },
-      { href: "/admin/refunds", label: "Refunds & Disputes", icon: "refunds" },
+      { href: "/admin/payments", label: "Payments", icon: "payments", perm: "finance.view" },
+      { href: "/admin/commissions", label: "Commissions", icon: "commissions", perm: "finance.view" },
+      { href: "/admin/refunds", label: "Refunds & Disputes", icon: "refunds", perm: "finance.view" },
     ],
   },
   {
     label: "System",
     items: [
-      { href: "/admin/analytics", label: "Analytics & Reports", icon: "analytics" },
-      { href: "/admin/staff", label: "Staff & Permissions", icon: "staff" },
+      { href: "/admin/analytics", label: "Analytics & Reports", icon: "analytics", perm: "analytics.view" },
+      { href: "/admin/staff", label: "Staff & Permissions", icon: "staff", perm: "staff.manage" },
       { href: "/admin/settings", label: "Settings", icon: "settings" },
     ],
   },
@@ -44,12 +45,12 @@ const all = groups.flatMap((g) => g.items);
 
 export type Notice = { pending: number; requests: number; items: { id: string; name: string; when: string }[] };
 
-function Nav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+function Nav({ collapsed, onNavigate, allowed }: { collapsed: boolean; onNavigate?: () => void; allowed: Permission[] }) {
   const pathname = usePathname();
   const active = (href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`));
   return (
     <nav aria-label="Admin" className="flex-1 overflow-y-auto px-3 py-4">
-      {groups.map((g) => (
+      {groups.map((g) => ({ ...g, items: g.items.filter((i) => !i.perm || allowed.includes(i.perm)) })).filter((g) => g.items.length > 0).map((g) => (
         <div key={g.label} className="mb-5">
           {!collapsed && <p className="mb-1 px-3 text-xs font-semibold text-slate">{g.label}</p>}
           {collapsed && <div className="mx-3 mb-2 border-t border-line" />}
@@ -95,7 +96,7 @@ function Brand({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function Profile({ user, collapsed }: { user: { name: string; email: string }; collapsed: boolean }) {
+function Profile({ user, collapsed }: { user: { name: string; email: string; role: string }; collapsed: boolean }) {
   return (
     <div className="border-t border-line p-3">
       <div className={`flex items-center gap-3 ${collapsed ? "flex-col" : ""}`}>
@@ -105,7 +106,7 @@ function Profile({ user, collapsed }: { user: { name: string; email: string }; c
         {!collapsed && (
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block truncate text-[15px] font-semibold">{user.name}</span>
-            <span className="block truncate text-xs text-slate">{user.email}</span>
+            <span className="block truncate text-xs text-slate">{user.role}</span>
           </span>
         )}
         <form action={signOut}>
@@ -118,7 +119,7 @@ function Profile({ user, collapsed }: { user: { name: string; email: string }; c
   );
 }
 
-export default function AdminShell({ user, notices, children }: { user: { name: string; email: string }; notices: Notice; children: React.ReactNode }) {
+export default function AdminShell({ user, allowed, notices, children }: { user: { name: string; email: string; role: string }; allowed: Permission[]; notices: Notice; children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const pathname = usePathname();
@@ -131,7 +132,7 @@ export default function AdminShell({ user, notices, children }: { user: { name: 
         <div className={`flex h-16 items-center border-b border-line px-4 ${collapsed ? "justify-center" : "justify-between"}`}>
           <Brand collapsed={collapsed} />
         </div>
-        <Nav collapsed={collapsed} />
+        <Nav collapsed={collapsed} allowed={allowed} />
         <button
           onClick={() => setCollapsed((c) => !c)}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -154,7 +155,7 @@ export default function AdminShell({ user, notices, children }: { user: { name: 
                 <Icon name="close" />
               </button>
             </div>
-            <Nav collapsed={false} onNavigate={() => setDrawer(false)} />
+            <Nav collapsed={false} onNavigate={() => setDrawer(false)} allowed={allowed} />
             <Profile user={user} collapsed={false} />
           </aside>
         </div>
@@ -223,6 +224,7 @@ export default function AdminShell({ user, notices, children }: { user: { name: 
             <div className="absolute right-0 mt-2 w-64 rounded-md border border-line bg-white p-4 shadow-lg">
               <p className="truncate font-semibold">{user.name}</p>
               <p className="truncate text-sm text-slate">{user.email}</p>
+              <p className="text-sm font-medium">{user.role}</p>
               <form action={signOut} className="mt-3">
                 <button className="w-full rounded-md border border-ink/30 px-4 py-2 font-semibold hover:bg-ink/5">Sign out</button>
               </form>

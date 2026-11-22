@@ -1,3 +1,4 @@
+import { requirePermission } from "@/lib/auth";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -19,6 +20,7 @@ const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? nu
 
 async function Body({ searchParams }: PageProps<"/admin/professionals/requests">) {
   await connection();
+  await requirePermission("professionals.view", "/admin/professionals/requests");
   const sp = await searchParams;
   const history = str(sp.view) === "history";
   const supabase = await createClient();
