@@ -1,25 +1,13 @@
+import Image from "next/image";
 import Link from "next/link";
+import dark from "../../public/brand/handycorp-wordmark.png";
+import lightLogo from "../../public/brand/handycorp-wordmark-light.png";
 
+// The HandyCorp wordmark. Use light on dark backgrounds.
 export default function Logo({ light = false }: { light?: boolean }) {
   return (
-    <Link
-      href="/"
-      aria-label="HandyCorp home"
-      className="inline-flex items-center gap-2.5"
-    >
-      <span
-        aria-hidden="true"
-        className="grid h-9 w-9 place-items-center rounded-xl bg-gold font-display text-xl font-extrabold text-ink"
-      >
-        H
-      </span>
-      <span
-        className={`font-display text-xl font-bold tracking-tight ${
-          light ? "text-paper" : "text-ink"
-        }`}
-      >
-        HandyCorp
-      </span>
+    <Link href="/" aria-label="HandyCorp home" className="inline-flex items-center">
+      <Image src={light ? lightLogo : dark} alt="HandyCorp" priority={!light} className="h-8 w-auto md:h-9" />
     </Link>
   );
 }

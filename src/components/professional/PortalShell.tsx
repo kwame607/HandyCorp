@@ -1,10 +1,12 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "@/app/(site)/(auth)/actions";
 import { Icon } from "@/components/admin/icons";
+import wordmark from "../../../public/brand/handycorp-wordmark.png";
 
 const items = [
   { href: "/professional/dashboard", label: "Overview", icon: "overview" },
@@ -44,10 +46,9 @@ function Nav({ onNavigate }: { onNavigate?: () => void }) {
 function Brand() {
   return (
     <Link href="/professional/dashboard" className="flex items-center gap-2.5" aria-label="HandyCorp professional dashboard">
-      <span aria-hidden="true" className="grid h-9 w-9 place-items-center rounded-lg bg-gold font-display text-xl font-extrabold">H</span>
       <span className="leading-tight">
-        <span className="block font-display text-lg font-bold">HandyCorp</span>
-        <span className="block text-xs text-slate">For professionals</span>
+        <Image src={wordmark} alt="HandyCorp" className="h-7 w-auto" />
+        <span className="mt-1 block text-xs text-slate">For professionals</span>
       </span>
     </Link>
   );

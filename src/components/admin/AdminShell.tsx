@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { useState } from "react";
+import wordmark from "../../../public/brand/handycorp-wordmark.png";
+import mark from "../../../public/brand/handycorp-mark.png";
 import { signOut } from "@/app/(site)/(auth)/actions";
 import type { Permission } from "@/lib/permissions";
 import { Icon } from "./icons";
@@ -85,11 +88,12 @@ function Nav({ collapsed, onNavigate, allowed }: { collapsed: boolean; onNavigat
 function Brand({ collapsed }: { collapsed: boolean }) {
   return (
     <Link href="/admin" className="flex items-center gap-2.5" aria-label="HandyCorp Admin Panel">
-      <span aria-hidden="true" className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gold font-display text-xl font-extrabold">H</span>
-      {!collapsed && (
+      {collapsed ? (
+        <Image src={mark} alt="" className="h-8 w-auto" />
+      ) : (
         <span className="leading-tight">
-          <span className="block font-display text-lg font-bold">HandyCorp</span>
-          <span className="block text-xs text-slate">Admin Panel</span>
+          <Image src={wordmark} alt="HandyCorp" className="h-7 w-auto" />
+          <span className="mt-1 block text-xs text-slate">Admin Panel</span>
         </span>
       )}
     </Link>
