@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { Card, Empty, NotConnected, PageHeader, Table, Td, Th } from "@/components/admin/ui";
 import { type AdminRow, actionLabels, fmtDateTime } from "@/lib/admin";
@@ -15,6 +16,7 @@ const roles = [
 ];
 
 async function Body() {
+  await connection();
   const supabase = await createClient();
   const [{ data: admins }, { data: log }] = await Promise.all([
     supabase.rpc("admin_list_admins"),
@@ -35,7 +37,7 @@ async function Body() {
               ))}
             </ul>
           )}
-          <p className="mt-4 text-sm text-slate">To add an administrator, set <code>role</code> to <code>admin</code> on their row in the <code>profiles</code> table in Supabase. Admin sign-up is never public.</p>
+          <p className="mt-4 text-sm text-slate">To add an administrator, turn on <code>is_admin</code> for their row in the <code>profiles</code> table in Supabase. They can keep any customer or professional role too. Admin sign-up is never public.</p>
         </Card>
         <Card title="Roles (planned)">
           <NotConnected>Today every administrator has full access. Role-based permissions are the next step before you add other staff.</NotConnected>

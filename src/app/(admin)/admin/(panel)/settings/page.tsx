@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { Card, NotConnected, PageHeader } from "@/components/admin/ui";
 import { createClient } from "@/lib/supabase/server";
@@ -6,6 +7,7 @@ import { requireRole } from "@/lib/auth";
 export const metadata = { title: "Settings | HandyCorp Admin" };
 
 async function Body() {
+  await connection();
   const user = await requireRole("admin", "/admin/login", "/admin/settings");
   const supabase = await createClient();
   const { data: areas } = await supabase.from("areas").select("name, city, is_active").order("sort_order");

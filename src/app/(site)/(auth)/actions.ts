@@ -61,7 +61,7 @@ export async function signIn(_: AuthState, f: FormData): Promise<AuthState> {
     };
   }
   const { data: claims } = await supabase.auth.getClaims();
-  const { data: me } = await supabase.from("profiles").select("role, status").eq("id", claims?.claims?.sub ?? "").maybeSingle();
+  const { data: me } = await supabase.from("profiles").select("role, is_admin, status").eq("id", claims?.claims?.sub ?? "").maybeSingle();
   const role = (me?.role as Role | undefined) ?? null;
   if (!role) {
     await supabase.auth.signOut();
@@ -71,12 +71,13 @@ export async function signIn(_: AuthState, f: FormData): Promise<AuthState> {
     await supabase.auth.signOut();
     return { status: "error", values, errors: { form: "This account has been suspended. Please contact HandyCorp support." } };
   }
-  if (audience === "admin" && role !== "admin") {
+  if (audience === "admin" && me?.is_admin !== true) {
     // Administration is only for administrators. Customers and professionals can't use this page.
     await supabase.auth.signOut();
     return { status: "error", values, errors: { form: "The email or password is incorrect." } };
   }
-  // Each person lands where their role belongs. A saved page is only used for the matching role.
+  // Administrators who sign in on the admin page go to the admin panel. Everyone else lands where their role belongs.
+  if (audience === "admin") redirect(safeNext(next, "/admin"));
   const matches = role === audience;
   redirect(matches ? safeNext(next, homeFor(role)) : homeFor(role));
 }
@@ -171,7 +172,7 @@ export async function signOut() {
   const supabase = await createClient();
   const role = await profileRole(supabase);
   await supabase.auth.signOut();
-  redirect(role === "professional" ? "/professional/login" : role === "admin" ? "/admin/login" : "/");
+  redirect(role === "professional" ? "/professional/login" : "/");
 }
 
 // A signed-in customer continues as a professional. The database only allows customer -> professional.

@@ -9,7 +9,7 @@ export const metadata = { title: "Administration | HandyCorp", robots: { index: 
 async function Form({ searchParams }: { searchParams: PageProps<"/admin/login">["searchParams"] }) {
   const sp = await searchParams;
   const user = await getCurrentUser();
-  if (user?.role === "admin") redirect("/admin");
+  if (user?.isAdmin) redirect("/admin");
   const raw = Array.isArray(sp.next) ? sp.next[0] : sp.next;
   const next = safeNext(raw, "");
   return (

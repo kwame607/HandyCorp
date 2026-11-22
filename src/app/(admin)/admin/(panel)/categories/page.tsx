@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
 import { Card, inputCls, Notice, PageHeader } from "@/components/admin/ui";
@@ -8,6 +9,7 @@ import { addService, createCategory, setCategoryActive, setServiceActive, update
 export const metadata = { title: "Service Categories | HandyCorp Admin" };
 
 async function Body({ searchParams }: PageProps<"/admin/categories">) {
+  await connection();
   const sp = await searchParams;
   const supabase = await createClient();
   const [{ data: cats }, { data: svcs }, { data: counts }] = await Promise.all([

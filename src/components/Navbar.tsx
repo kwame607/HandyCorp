@@ -18,7 +18,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const user = useAuthState();
-  const home = user?.role === "professional" ? "/professional/dashboard" : user?.role === "admin" ? "/admin" : "/account";
+  const home = user?.role === "professional" ? "/professional/dashboard" : "/account";
 
   const isActive = (section?: string) =>
     !!section && (pathname === section || pathname.startsWith(`${section}/`));
@@ -57,8 +57,13 @@ export default function Navbar() {
           ) : user ? (
             <>
               <Link href={home} className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5">
-                {user.role === "customer" ? "My Account" : user.role === "admin" ? "Admin" : "Dashboard"}
+                {user.role === "customer" ? "My Account" : "Dashboard"}
               </Link>
+              {user.isAdmin && (
+                <Link href="/admin" className="rounded-full px-4 py-2.5 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5">
+                  Admin
+                </Link>
+              )}
               <form action={signOut}>
                 <button className="rounded-full bg-ink px-5 py-2.5 text-[15px] font-semibold text-paper transition-colors hover:bg-ink/85">
                   Sign Out
@@ -122,8 +127,13 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link href={home} onClick={() => setOpen(false)} className="flex-1 rounded-full border border-ink/20 py-3 text-center font-medium">
-                  {user.role === "customer" ? "My Account" : user.role === "admin" ? "Admin" : "Dashboard"}
+                  {user.role === "customer" ? "My Account" : "Dashboard"}
                 </Link>
+                {user.isAdmin && (
+                  <Link href="/admin" onClick={() => setOpen(false)} className="flex-1 rounded-full border border-ink/20 py-3 text-center font-medium">
+                    Admin
+                  </Link>
+                )}
                 <form action={signOut} className="flex-1">
                   <button className="w-full rounded-full bg-ink py-3 text-center font-semibold text-paper">Sign Out</button>
                 </form>

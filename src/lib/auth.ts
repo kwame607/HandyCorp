@@ -2,11 +2,14 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export type Role = "customer" | "professional" | "admin";
+export type Role = "customer" | "professional";
+// Administration is a separate switch on the account, so the same email can be an administrator and a professional.
+export type Need = Role | "admin";
 export type CurrentUser = {
   id: string;
   email: string | undefined;
   role: Role;
+  isAdmin: boolean;
   fullName: string;
   phone: string | null;
 };
@@ -23,7 +26,6 @@ export function safeNext(value: unknown, fallback = "/"): string {
 
 export function homeFor(role: Role): string {
   if (role === "professional") return "/professional/dashboard";
-  if (role === "admin") return "/admin";
   return "/account";
 }
 
@@ -37,7 +39,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   if (!id) return null;
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, full_name, phone, status")
+    .select("role, is_admin, full_name, phone, status")
     .eq("id", id)
     .maybeSingle();
   // Suspended accounts are treated as signed out everywhere.
@@ -46,14 +48,15 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     id,
     email: claims.claims.email as string | undefined,
     role: profile.role as Role,
+    isAdmin: profile.is_admin === true,
     fullName: profile.full_name,
     phone: profile.phone,
   };
 }
 
-export async function requireRole(role: Role, loginPath: string, next: string): Promise<CurrentUser> {
+export async function requireRole(role: Need, loginPath: string, next: string): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect(`${loginPath}?next=${encodeURIComponent(next)}`);
-  if (user.role !== role) redirect(homeFor(user.role));
+  if (role === "admin" ? !user.isAdmin : user.role !== role) redirect(homeFor(user.role));
   return user;
 }

@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,6 +15,7 @@ const kindLabel: Record<string, string> = { profile_photo: "Profile photo", port
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
 async function Body({ params, searchParams }: PageProps<"/admin/professionals/[id]">) {
+  await connection();
   const { id } = await params;
   const sp = await searchParams;
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();

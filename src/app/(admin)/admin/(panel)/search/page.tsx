@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Card, Empty, PageHeader, StatusBadge } from "@/components/admin/ui";
@@ -7,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = { title: "Search | HandyCorp Admin" };
 
 async function Body({ searchParams }: PageProps<"/admin/search">) {
+  await connection();
   const q = str((await searchParams).q);
   const supabase = await createClient();
   const [c, p] = q
