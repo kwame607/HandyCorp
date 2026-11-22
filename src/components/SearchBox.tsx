@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { Area } from "@/data/areas";
 import type { Category } from "@/data/services";
-import { NEAR_KM, nearestArea } from "@/lib/geo";
+import { NEAR_KM, nearestAreas } from "@/lib/geo";
+import { locate, type Fix } from "@/lib/locate";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
 
 
@@ -55,30 +56,40 @@ export default function SearchBox({
   const serviceList = `${idPrefix}-services`;
   const areaList = `${idPrefix}-areas`;
 
-  function useMyLocation() {
-    if (!("geolocation" in navigator)) {
-      setStatus("Location isn't available on this device. Type your area instead.");
+  const [choices, setChoices] = useState<Area[]>([]);
+
+  function applyFix(fix: Fix, final: boolean) {
+    const at: [number, number] = [fix.lat, fix.lng];
+    setCoords({ lat: fix.lat, lng: fix.lng });
+    const near = nearestAreas(at, areas, 3).filter((n) => n.km <= NEAR_KM);
+    if (near.length === 0) {
+      setLocation("My current location");
+      setChoices([]);
+      if (final) setStatus("You look to be outside the regions we cover for now.");
       return;
     }
-    setStatus("Finding your location…");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const at: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        setCoords({ lat: at[0], lng: at[1] });
-        const near = nearestArea(at, areas);
-        if (near && near.km <= NEAR_KM) {
-          setLocation(near.area.name);
-          setStatus(`Using your nearest area: ${near.area.name}, ${near.area.region}. Change it if that's not right.`);
-        } else {
-          setLocation("My current location");
-          setStatus(near ? "You look to be outside the regions we cover for now." : "");
-        }
-      },
-      () => {
-        setStatus("We couldn't get your location. Type your area instead.");
-      },
-      { timeout: 10000 },
+    setLocation(near[0].area.name);
+    setChoices(near.map((n) => n.area));
+    if (!final) {
+      setStatus("Improving accuracy…");
+      return;
+    }
+    const rough = fix.accuracy > 1000;
+    setStatus(
+      rough
+        ? `Your device gave an approximate location (within about ${(fix.accuracy / 1000).toFixed(1)} km). Laptops and some phones do this. Please choose your area below.`
+        : `Using your nearest area: ${near[0].area.name}, ${near[0].area.region}. Not right? Choose another below or type it.`,
     );
+  }
+
+  function useMyLocation() {
+    setStatus("Finding your location…");
+    setChoices([]);
+    locate({
+      onUpdate: (fix) => applyFix(fix, false),
+      onDone: (fix) => applyFix(fix, true),
+      onError: (message) => setStatus(message),
+    });
   }
 
   return (
@@ -161,6 +172,18 @@ export default function SearchBox({
       >
         {status || "Type your area or use your location."}
       </p>
+
+      {choices.length > 1 && (
+        <ul className="mt-1 flex flex-wrap gap-2 px-2" aria-label="Nearby areas">
+          {choices.map((a) => (
+            <li key={a.slug}>
+              <button type="button" onClick={() => setLocation(a.name)} aria-pressed={location === a.name} className={`rounded-md border px-3 py-1.5 text-sm font-medium ${location === a.name ? "border-ink bg-ink text-paper" : "border-ink/30 hover:bg-ink/5"}`}>
+                {a.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <datalist id={serviceList}>
         {serviceSuggestions.map((name) => (

@@ -19,3 +19,12 @@ export function nearestArea(at: [number, number], areas: Area[]): { area: Area; 
 }
 
 export const NEAR_KM = 25;
+
+// The few closest areas that have coordinates, nearest first.
+export function nearestAreas(at: [number, number], areas: Area[], count = 3): { area: Area; km: number }[] {
+  return areas
+    .filter((a) => a.lat != null && a.lng != null)
+    .map((area) => ({ area, km: km(at, [area.lat as number, area.lng as number]) }))
+    .sort((a, b) => a.km - b.km)
+    .slice(0, count);
+}
