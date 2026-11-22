@@ -41,7 +41,7 @@ const groups: { label: string; items: Item[] }[] = [
 ];
 const all = groups.flatMap((g) => g.items);
 
-export type Notice = { pending: number; items: { id: string; name: string; when: string }[] };
+export type Notice = { pending: number; requests: number; items: { id: string; name: string; when: string }[] };
 
 function Nav({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -181,18 +181,26 @@ export default function AdminShell({ user, notices, children }: { user: { name: 
           </a>
 
           <details className="relative">
-            <summary aria-label={`Notifications${notices.pending ? `, ${notices.pending} new` : ""}`} className="relative grid h-10 w-10 cursor-pointer list-none place-items-center rounded-md hover:bg-ink/5 [&::-webkit-details-marker]:hidden">
+            <summary aria-label={`Notifications${notices.pending + notices.requests ? `, ${notices.pending + notices.requests} new` : ""}`} className="relative grid h-10 w-10 cursor-pointer list-none place-items-center rounded-md hover:bg-ink/5 [&::-webkit-details-marker]:hidden">
               <Icon name="bell" />
-              {notices.pending > 0 && (
-                <span className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-gold px-1 text-[11px] font-bold leading-4 text-ink">{notices.pending}</span>
+              {notices.pending + notices.requests > 0 && (
+                <span className="absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-gold px-1 text-[11px] font-bold leading-4 text-ink">{notices.pending + notices.requests}</span>
               )}
             </summary>
             <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-md border border-line bg-white shadow-lg">
               <p className="border-b border-line px-4 py-3 font-semibold">Notifications</p>
-              {notices.items.length === 0 ? (
+              {notices.items.length === 0 && notices.requests === 0 ? (
                 <p className="px-4 py-5 text-[15px] text-slate">Nothing needs your attention.</p>
               ) : (
                 <ul className="max-h-80 divide-y divide-line overflow-y-auto">
+                  {notices.requests > 0 && (
+                    <li>
+                      <Link href="/admin/professionals/requests" className="block px-4 py-3 hover:bg-ink/5">
+                        <span className="block text-[15px] font-medium">Requests for more work</span>
+                        <span className="block text-sm text-slate">{notices.requests} waiting for a decision</span>
+                      </Link>
+                    </li>
+                  )}
                   {notices.items.map((n) => (
                     <li key={n.id}>
                       <Link href={`/admin/professionals/${n.id}`} className="block px-4 py-3 hover:bg-ink/5">

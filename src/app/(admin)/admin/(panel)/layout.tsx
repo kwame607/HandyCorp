@@ -13,9 +13,11 @@ async function Guard({ children }: { children: React.ReactNode }) {
   const { data } = await supabase.rpc("admin_list_professionals", {
     p_q: "", p_status: "submitted", p_category: "", p_location: "", p_account: "", p_limit: 5, p_offset: 0,
   });
+  const { count: requests } = await supabase.from("professional_service_requests").select("id", { count: "exact", head: true }).eq("status", "pending");
   const rows = (data ?? []) as ProRow[];
   const notices = {
     pending: Number(rows[0]?.total ?? 0),
+    requests: requests ?? 0,
     items: rows.map((r) => ({ id: r.user_id, name: r.display_name || r.full_name, when: fmtDate(r.submitted_at) })),
   };
   return (

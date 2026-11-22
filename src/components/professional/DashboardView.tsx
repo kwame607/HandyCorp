@@ -9,21 +9,27 @@ const statuses: Record<string, { label: string; text: string }> = {
   rejected: { label: "Rejected", text: "We couldn't approve your profile this time." },
 };
 
-// What a professional sees after registering. Also used for the admin's read-only preview.
-export default function DashboardView({ firstName, status, note, preview = false }: { firstName: string; status: string; note: string | null; preview?: boolean }) {
+export function StatusCard({ status, note }: { status: string; note: string | null }) {
   const s = statuses[status] ?? statuses.submitted;
+  return (
+    <section className="rounded-lg border border-line bg-white p-6">
+      <h2 className="text-sm font-medium text-slate">Profile status</h2>
+      <p className="mt-1 font-display text-2xl font-bold">{s.label}</p>
+      <p className="mt-2 max-w-xl leading-relaxed text-slate">{s.text}</p>
+      {note && <p className="mt-3 border-l-2 border-gold-deep pl-3">{note}</p>}
+      {status !== "approved" && (
+        <p className="mt-4 text-sm text-slate">Your profile won&apos;t show as verified until HandyCorp approves it.</p>
+      )}
+    </section>
+  );
+}
+
+// The admin's read-only preview of a professional's dashboard.
+export default function DashboardView({ firstName, status, note, preview = false }: { firstName: string; status: string; note: string | null; preview?: boolean }) {
   return (
     <>
       <h1 className="font-display text-3xl font-bold tracking-tight">Hello, {firstName}</h1>
-      <section className="mt-8 rounded-lg border border-line bg-white p-6">
-        <h2 className="text-sm font-medium text-slate">Profile status</h2>
-        <p className="mt-1 font-display text-2xl font-bold">{s.label}</p>
-        <p className="mt-2 max-w-xl leading-relaxed text-slate">{s.text}</p>
-        {note && <p className="mt-3 border-l-2 border-gold-deep pl-3">{note}</p>}
-        {status !== "approved" && (
-          <p className="mt-4 text-sm text-slate">Your profile won&apos;t show as verified until HandyCorp approves it.</p>
-        )}
-      </section>
+      <div className="mt-8"><StatusCard status={status} note={note} /></div>
       {!preview && (
         <>
           <form action={signOut} className="mt-8">

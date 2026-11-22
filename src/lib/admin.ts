@@ -33,6 +33,8 @@ export const actionLabels: Record<string, string> = {
   "category.update": "Edited a category",
   "category.activate": "Activated a category",
   "category.deactivate": "Deactivated a category",
+  "workrequest.approved": "Approved a request for more work",
+  "workrequest.declined": "Declined a request for more work",
   "service.create": "Added a service",
   "service.activate": "Activated a service",
   "service.deactivate": "Deactivated a service",

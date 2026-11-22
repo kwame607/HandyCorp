@@ -16,7 +16,7 @@ async function Body() {
   const d60 = daysAgoISO(60);
   const count = { count: "exact" as const, head: true };
 
-  const [cust, cust30, custPrev, active, pending, regs, audit, pros] = await Promise.all([
+  const [cust, cust30, custPrev, active, pending, regs, audit, pros, workReqs] = await Promise.all([
     supabase.from("profiles").select("id", count).eq("role", "customer"),
     supabase.from("profiles").select("id", count).eq("role", "customer").gte("created_at", d30),
     supabase.from("profiles").select("id", count).eq("role", "customer").gte("created_at", d60).lt("created_at", d30),
@@ -25,6 +25,7 @@ async function Body() {
     supabase.from("professional_profiles").select("user_id, display_name, status, submitted_at, profiles(full_name)").order("submitted_at", { ascending: false }).limit(6),
     supabase.from("admin_audit_log").select("id, action, created_at, profiles(full_name)").order("created_at", { ascending: false }).limit(6),
     supabase.from("professional_profiles").select("user_id", count),
+    supabase.from("professional_service_requests").select("id", count).eq("status", "pending"),
   ]);
 
   const c30 = cust30.count ?? 0;
@@ -62,6 +63,10 @@ async function Body() {
           <li className="flex justify-between gap-4">
             <Link href="/admin/professionals?status=submitted" className="underline underline-offset-4">Professionals awaiting verification</Link>
             <strong>{pending.count ?? 0}</strong>
+          </li>
+          <li className="flex justify-between gap-4">
+            <Link href="/admin/professionals/requests" className="underline underline-offset-4">Requests for more work</Link>
+            <strong>{workReqs.count ?? 0}</strong>
           </li>
           {["Unresolved disputes", "Failed payments", "Customer complaints", "Pending refunds"].map((l) => (
             <li key={l} className="flex justify-between gap-4 text-slate"><span>{l}</span><span>Not connected</span></li>

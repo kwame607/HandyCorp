@@ -29,7 +29,7 @@ async function Body({ searchParams }: PageProps<"/admin/professionals">) {
       <PageHeader
         title="Professionals"
         text="Review registrations, check documents and decide who gets verified."
-        actions={<Link prefetch={false} href="/admin/export/professionals" className="rounded-md border border-ink/30 px-4 py-2.5 text-[15px] font-semibold hover:bg-ink/5">Export CSV</Link>}
+        actions={<div className="flex gap-3"><Link prefetch={false} href="/admin/professionals/requests" className="rounded-md border border-ink/30 px-4 py-2.5 text-[15px] font-semibold hover:bg-ink/5">Work requests</Link><Link prefetch={false} href="/admin/export/professionals" className="rounded-md border border-ink/30 px-4 py-2.5 text-[15px] font-semibold hover:bg-ink/5">Export CSV</Link></div>}
       />
       <form className="mb-5 grid gap-3 rounded-md border border-line bg-white p-4 sm:grid-cols-2 lg:grid-cols-[2fr_1.3fr_1.3fr_1fr_1fr_auto]">
         <div>

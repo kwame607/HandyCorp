@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 
 // A button that asks "are you sure?" before submitting the form it sits in.
 export default function ConfirmSubmit(props: {
@@ -13,6 +13,7 @@ export default function ConfirmSubmit(props: {
   requires?: string; // name of a field in the same form that must be filled first
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const uid = useId();
   const tone =
     props.tone === "danger"
       ? "border border-[#b3261e] text-[#9c2019] hover:bg-[#fdf0ee]"
@@ -38,9 +39,9 @@ export default function ConfirmSubmit(props: {
       <button type="button" onClick={open} className={`rounded-md px-4 py-2.5 text-[15px] font-semibold ${tone}`}>
         {props.label}
       </button>
-      <dialog ref={ref} aria-labelledby={`${props.label}-t`} className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-md border border-line bg-white p-0 shadow-xl backdrop:bg-ink/40">
+      <dialog ref={ref} aria-labelledby={`${uid}-t`} className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-md border border-line bg-white p-0 shadow-xl backdrop:bg-ink/40">
         <div className="p-6">
-          <h2 id={`${props.label}-t`} className="font-display text-xl font-bold">{props.title}</h2>
+          <h2 id={`${uid}-t`} className="font-display text-xl font-bold">{props.title}</h2>
           <p className="mt-2 leading-relaxed text-slate">{props.message}</p>
           <div className="mt-6 flex justify-end gap-3">
             <button type="button" onClick={() => ref.current?.close()} className="rounded-md border border-ink/30 px-4 py-2.5 font-semibold hover:bg-ink/5">

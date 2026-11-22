@@ -29,7 +29,7 @@ export async function proxy(request: NextRequest) {
   const signedIn = !!data?.claims?.sub;
 
   if (!signedIn) {
-    const pro = path.startsWith("/professional/dashboard") || path.startsWith("/professional/onboarding");
+    const pro = ["dashboard", "onboarding", "bookings", "reviews", "services", "profile", "settings"].some((p) => path === `/professional/${p}` || path.startsWith(`/professional/${p}/`));
     const admin = path.startsWith("/admin") && path !== "/admin/login";
     const customer = path.startsWith("/account");
     if (pro || customer || admin) {

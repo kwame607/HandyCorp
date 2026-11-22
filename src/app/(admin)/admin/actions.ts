@@ -87,3 +87,14 @@ export async function setServiceActive(f: FormData) {
   if (error) console.error("[admin] service active failed:", error.code || "no code");
   done("/admin/categories", !error, friendly(error?.message));
 }
+
+export async function decideWorkRequest(f: FormData) {
+  const id = field(f, "id");
+  const decision = field(f, "decision");
+  const supabase = await admin();
+  if (!uuid.test(id) || !["approved", "declined"].includes(decision)) redirect("/admin/professionals/requests");
+  const { error } = await supabase.rpc("admin_decide_service_request", { p_id: id, p_decision: decision, p_note: field(f, "note") });
+  if (error) console.error("[admin] work request decision failed:", error.code || "no code");
+  const msg = error && /note|reason/i.test(error.message) ? "Please write a reason when declining." : error && /already/i.test(error.message) ? "This request was already decided." : "Something went wrong. Please try again.";
+  done("/admin/professionals/requests", !error, msg);
+}
