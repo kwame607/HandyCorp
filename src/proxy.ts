@@ -29,9 +29,9 @@ export async function proxy(request: NextRequest) {
   const signedIn = !!data?.claims?.sub;
 
   if (!signedIn) {
-    const pro = ["dashboard", "onboarding", "bookings", "reviews", "services", "profile", "settings"].some((p) => path === `/professional/${p}` || path.startsWith(`/professional/${p}/`));
+    const pro = ["dashboard", "onboarding", "requests", "bookings", "reviews", "services", "profile", "settings"].some((p) => path === `/professional/${p}` || path.startsWith(`/professional/${p}/`));
     const admin = path.startsWith("/admin") && path !== "/admin/login";
-    const customer = path.startsWith("/account");
+    const customer = path.startsWith("/account") || path.startsWith("/request");
     if (pro || customer || admin) {
       const to = request.nextUrl.clone();
       to.pathname = admin ? "/admin/login" : pro ? "/professional/login" : "/login";

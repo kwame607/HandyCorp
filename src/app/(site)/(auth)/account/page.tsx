@@ -26,7 +26,8 @@ async function Account() {
         <LocationMap areas={areas} />
       </section>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/services" className="rounded-md bg-gold px-6 py-3 font-bold hover:bg-gold-deep">Browse services</Link>
+        <Link href="/request/new" className="rounded-md bg-gold px-6 py-3 font-bold hover:bg-gold-deep">Request a professional</Link>
+        <Link href="/account/requests" className="rounded-md border border-ink px-6 py-3 font-semibold hover:bg-ink hover:text-paper">Your requests</Link>
         <form action={signOut}>
           <button className="rounded-md border border-ink px-6 py-3 font-semibold hover:bg-ink hover:text-paper">Sign out</button>
         </form>

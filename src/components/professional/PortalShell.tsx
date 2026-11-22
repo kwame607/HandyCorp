@@ -10,6 +10,7 @@ import wordmark from "../../../public/brand/handycorp-wordmark.png";
 
 const items = [
   { href: "/professional/dashboard", label: "Overview", icon: "overview" },
+  { href: "/professional/requests", label: "Requests", icon: "requests" },
   { href: "/professional/bookings", label: "Bookings", icon: "bookings" },
   { href: "/professional/reviews", label: "Reviews", icon: "reviews" },
   { href: "/professional/services", label: "My Services", icon: "categories" },

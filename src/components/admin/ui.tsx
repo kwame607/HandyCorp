@@ -10,10 +10,14 @@ const tones: Record<string, string> = {
 const statusTone: Record<string, string> = {
   submitted: "amber", under_review: "amber", more_info_required: "amber", approved: "green", rejected: "red",
   active: "green", suspended: "red",
+  open: "amber", booked: "green", cancelled: "red", confirmed: "amber", in_progress: "amber", completed: "green",
+  accepted: "green", declined: "red", withdrawn: "grey", superseded: "grey", closed: "grey",
 };
 const statusText: Record<string, string> = {
   submitted: "Pending verification", under_review: "Under review", more_info_required: "More information required",
   approved: "Verified", rejected: "Rejected", active: "Active", suspended: "Suspended",
+  open: "Open", booked: "Booked", cancelled: "Cancelled", confirmed: "Confirmed", in_progress: "In progress", completed: "Completed",
+  accepted: "Accepted", declined: "Declined", withdrawn: "Withdrawn", superseded: "Replaced", closed: "Closed",
 };
 export const statusName = (s: string) => statusText[s] ?? s;
 
