@@ -39,7 +39,7 @@ export default function AreaPicker({
         <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="Region">
           <button type="button" aria-pressed={region === ""} onClick={() => setRegion("")} className={tab(region === "")}>All regions</button>
           {present.map((r) => (
-            <button key={r} type="button" aria-pressed={region === r} onClick={() => setRegion(r)} className={tab(region === r)}>{r}</button>
+            <button key={r} type="button" aria-pressed={region === r} onClick={() => setRegion(r)} className={tab(region === r)}>{r} ({areas.filter((a) => a.region === r).length})</button>
           ))}
         </div>
       )}
@@ -69,17 +69,26 @@ export default function AreaPicker({
           })}
         </ul>
       )}
-      <ul className="mt-3 grid max-h-72 gap-x-8 overflow-y-auto border-y border-line sm:grid-cols-2">
-        {shown.map((a) => (
-          <li key={a.slug}>
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b border-line py-2">
-              <input type="checkbox" checked={value.includes(a.slug)} onChange={() => toggle(a.slug)} className="h-5 w-5 accent-ink" />
-              <span>{a.name}{!region && present.length > 1 && <span className="text-sm text-slate">, {a.region}</span>}</span>
-            </label>
-          </li>
+      <div className="mt-3 max-h-80 overflow-y-auto border-y border-line">
+        {present.filter((r) => shown.some((a) => a.region === r)).map((r) => (
+          <section key={r} aria-labelledby={`${id}-${r}`}>
+            <h3 id={`${id}-${r}`} className="sticky top-0 z-10 bg-ink px-3 py-2 text-sm font-semibold text-paper">
+              {r} <span className="font-normal opacity-80">({shown.filter((a) => a.region === r).length})</span>
+            </h3>
+            <ul className="grid gap-x-8 px-1 sm:grid-cols-2">
+              {shown.filter((a) => a.region === r).map((a) => (
+                <li key={a.slug}>
+                  <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b border-line py-2">
+                    <input type="checkbox" checked={value.includes(a.slug)} onChange={() => toggle(a.slug)} className="h-5 w-5 accent-ink" />
+                    {a.name}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </section>
         ))}
-        {shown.length === 0 && <li className="py-3 text-slate">No area matches your search.</li>}
-      </ul>
+        {shown.length === 0 && <p className="px-3 py-3 text-slate">No area matches “{q}”.</p>}
+      </div>
       {name && value.map((s) => <input key={s} type="hidden" name={name} value={s} />)}
     </div>
   );

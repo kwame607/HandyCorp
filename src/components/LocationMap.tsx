@@ -4,15 +4,11 @@ import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, LayerGroup } from "leaflet";
 import type { Area } from "@/data/areas";
+import { NEAR_KM, nearestArea } from "@/lib/geo";
 
 // Centre of Greater Accra, Ashanti and Central, so all three regions are in view.
 const START: [number, number] = [6.1, -1.3];
 
-function km(a: [number, number], b: [number, number]) {
-  const r = Math.PI / 180;
-  const h = Math.sin(((b[0] - a[0]) * r) / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(((b[1] - a[1]) * r) / 2) ** 2;
-  return 12742 * Math.asin(Math.sqrt(h));
-}
 
 // Shows a map of Kumasi. Only when the person presses the button do we ask the
 // browser for their location. It is drawn on the map and is not sent or saved anywhere.
@@ -64,15 +60,10 @@ export default function LocationMap({ areas = [] }: { areas?: Area[] }) {
           m.setView(at, pos.coords.accuracy > 1000 ? 14 : 16);
         }
         const at: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        let best: { a: Area; d: number } | null = null;
-        for (const a of areas) {
-          if (a.lat == null || a.lng == null) continue;
-          const d = km(at, [a.lat, a.lng]);
-          if (!best || d < best.d) best = { a, d };
-        }
+        const best = nearestArea(at, areas);
         const near = best
-          ? best.d <= 25
-            ? ` Nearest area: ${best.a.name}, ${best.a.region}.`
+          ? best.km <= NEAR_KM
+            ? ` Nearest area: ${best.area.name}, ${best.area.region}.`
             : " You look to be outside the regions we cover for now."
           : "";
         setStatus(`Showing your location, accurate to about ${Math.round(pos.coords.accuracy)} metres.${near}`);

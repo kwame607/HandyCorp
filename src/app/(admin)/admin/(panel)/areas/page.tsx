@@ -1,5 +1,5 @@
 import { connection } from "next/server";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
 import { Card, inputCls, Notice, PageHeader } from "@/components/admin/ui";
 import { regions } from "@/data/areas";
@@ -14,7 +14,7 @@ async function Body({ searchParams }: PageProps<"/admin/areas">) {
   const sp = await searchParams;
   const q = str(sp.q).toLowerCase();
   const supabase = await createClient();
-  const { data, error } = await supabase.from("areas").select("id, name, region, is_active").order("name");
+  const { data, error } = await supabase.from("areas").select("id, name, region, is_active").order("region").order("name");
   const all = data ?? [];
   const reg = str(sp.region);
   const rows = all.filter((a) => (!q || a.name.toLowerCase().includes(q)) && (!reg || a.region === reg));
@@ -56,21 +56,26 @@ async function Body({ searchParams }: PageProps<"/admin/areas">) {
             <button className="rounded-md border border-ink/30 px-4 py-2.5 font-semibold hover:bg-ink/5">Filter</button>
           </form>
           <ul className="divide-y divide-line">
-            {rows.map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
-                <span>{a.name}, {a.region} {!a.is_active && <span className="ml-2 rounded bg-ink/5 px-2 py-0.5 text-sm text-slate">Hidden</span>}</span>
-                <form action={setAreaActive}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <ConfirmSubmit
-                    label={a.is_active ? "Hide" : "Show"}
-                    tone={a.is_active ? "danger" : "primary"}
-                    name="active"
-                    value={a.is_active ? "false" : "true"}
-                    title={`${a.is_active ? "Hide" : "Show"} ${a.name}?`}
-                    message={a.is_active ? "People won't be able to pick this area. Existing records are kept." : "People will be able to pick this area again."}
-                  />
-                </form>
-              </li>
+            {rows.map((a, i) => (
+              <Fragment key={a.id}>
+                {(i === 0 || rows[i - 1].region !== a.region) && (
+                  <li className="bg-sand px-3 py-2 text-sm font-semibold" aria-hidden="true">{a.region}</li>
+                )}
+                <li className="flex items-center justify-between gap-3 py-2.5">
+                  <span>{a.name} {!a.is_active && <span className="ml-2 rounded bg-ink/5 px-2 py-0.5 text-sm text-slate">Hidden</span>}</span>
+                  <form action={setAreaActive}>
+                    <input type="hidden" name="id" value={a.id} />
+                    <ConfirmSubmit
+                      label={a.is_active ? "Hide" : "Show"}
+                      tone={a.is_active ? "danger" : "primary"}
+                      name="active"
+                      value={a.is_active ? "false" : "true"}
+                      title={`${a.is_active ? "Hide" : "Show"} ${a.name}?`}
+                      message={a.is_active ? "People won't be able to pick this area. Existing records are kept." : "People will be able to pick this area again."}
+                    />
+                  </form>
+                </li>
+              </Fragment>
             ))}
             {rows.length === 0 && <li className="py-3 text-slate">No area matches your search.</li>}
           </ul>

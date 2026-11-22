@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import SearchBox from "@/components/SearchBox";
+import type { Area } from "@/data/areas";
 import Breadcrumb from "@/components/services/Breadcrumb";
 import CategorySection from "@/components/services/CategorySection";
 import DiscoverySteps from "@/components/services/DiscoverySteps";
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 const first = (v: string | string[] | undefined) =>
   (Array.isArray(v) ? v[0] : v)?.trim() ?? "";
 
-type Lists = { categories: Category[]; areas: string[] };
+type Lists = { categories: Category[]; areas: Area[] };
 
 const searchProps = {
   variant: "directory",
@@ -52,7 +53,7 @@ async function SearchArea({
 
 export default async function ServicesPage(props: PageProps<"/services">) {
   const { categories, areas, popular } = await getCatalogue();
-  const lists = { categories, areas: [...new Set(areas.map((a) => a.name))] };
+  const lists = { categories, areas };
   return (
     <main>
       <section className="mx-auto w-full max-w-6xl px-5 pb-12 pt-8 md:pb-14 md:pt-10">

@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import type { Area } from "@/data/areas";
 import type { Category } from "@/data/services";
+import { NEAR_KM, nearestArea } from "@/lib/geo";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
 
 
 type Props = {
   categories: Category[];
-  areas: string[];
+  areas: Area[];
   /** "hero" is the rounded homepage bar; "directory" is the flatter bar used inside pages. */
   variant?: "hero" | "directory";
   servicePlaceholder?: string;
@@ -61,9 +63,16 @@ export default function SearchBox({
     setStatus("Finding your location…");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocation("My current location");
-        setStatus("");
+        const at: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        setCoords({ lat: at[0], lng: at[1] });
+        const near = nearestArea(at, areas);
+        if (near && near.km <= NEAR_KM) {
+          setLocation(near.area.name);
+          setStatus(`Using your nearest area: ${near.area.name}, ${near.area.region}. Change it if that's not right.`);
+        } else {
+          setLocation("My current location");
+          setStatus(near ? "You look to be outside the regions we cover for now." : "");
+        }
       },
       () => {
         setStatus("We couldn't get your location. Type your area instead.");
@@ -150,7 +159,7 @@ export default function SearchBox({
         aria-live="polite"
         className="mt-3 min-h-5 px-2 text-sm text-slate"
       >
-        {status || "Starting in Kumasi. Type your area or use your location."}
+        {status || "Type your area or use your location."}
       </p>
 
       <datalist id={serviceList}>
@@ -160,7 +169,7 @@ export default function SearchBox({
       </datalist>
       <datalist id={areaList}>
         {areas.map((a) => (
-          <option key={a} value={a} />
+          <option key={a.slug} value={a.name} label={a.region} />
         ))}
       </datalist>
     </form>
