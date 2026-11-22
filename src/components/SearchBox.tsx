@@ -5,6 +5,7 @@ import type { Area } from "@/data/areas";
 import type { Category } from "@/data/services";
 import { NEAR_KM, nearestAreas } from "@/lib/geo";
 import { locate, type Fix } from "@/lib/locate";
+import Combobox from "./Combobox";
 import { LocateIcon, PinIcon, SearchIcon } from "./icons";
 
 
@@ -44,7 +45,6 @@ export default function SearchBox({
   buttonLabel = "Find Professionals",
   defaultService = "",
   defaultLocation = "",
-  idPrefix = "search",
 }: Props) {
   const [location, setLocation] = useState(defaultLocation);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -52,9 +52,8 @@ export default function SearchBox({
   );
   const [status, setStatus] = useState("");
   const s = styles[variant];
-  const serviceSuggestions = categories.flatMap((c) => c.services.map((x) => x.name));
-  const serviceList = `${idPrefix}-services`;
-  const areaList = `${idPrefix}-areas`;
+  const serviceOptions = categories.flatMap((c) => c.services.map((x) => ({ value: x.name, hint: c.name })));
+  const areaOptions = areas.map((a) => ({ value: a.name, hint: a.region }));
 
   const [choices, setChoices] = useState<Area[]>([]);
 
@@ -106,13 +105,11 @@ export default function SearchBox({
         >
           <SearchIcon className="shrink-0 text-slate" />
           <span className="sr-only">Service</span>
-          <input
+          <Combobox
             name="q"
-            type="text"
-            list={serviceList}
             defaultValue={defaultService}
+            options={serviceOptions}
             placeholder={servicePlaceholder}
-            autoComplete="off"
             className="w-full bg-transparent text-base text-ink placeholder:text-slate focus:outline-none"
           />
         </label>
@@ -125,17 +122,16 @@ export default function SearchBox({
           <label className="flex flex-1 items-center gap-3 px-4 py-3">
             <PinIcon className="shrink-0 text-slate" />
             <span className="sr-only">Location</span>
-            <input
+            <Combobox
               name="location"
-              type="text"
-              list={areaList}
               value={location}
-              onChange={(e) => {
-                setLocation(e.target.value);
+              onChange={(v) => {
+                setLocation(v);
                 setCoords(null);
+                setChoices([]);
               }}
+              options={areaOptions}
               placeholder={locationPlaceholder}
-              autoComplete="off"
               className="w-full bg-transparent text-base text-ink placeholder:text-slate focus:outline-none"
             />
           </label>
@@ -185,16 +181,6 @@ export default function SearchBox({
         </ul>
       )}
 
-      <datalist id={serviceList}>
-        {serviceSuggestions.map((name) => (
-          <option key={name} value={name} />
-        ))}
-      </datalist>
-      <datalist id={areaList}>
-        {areas.map((a) => (
-          <option key={a.slug} value={a.name} label={a.region} />
-        ))}
-      </datalist>
     </form>
   );
 }
