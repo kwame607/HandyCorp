@@ -15,6 +15,7 @@ const groups: { label: string; items: Item[] }[] = [
       { href: "/admin/customers", label: "Customers", icon: "customers" },
       { href: "/admin/professionals", label: "Professionals", icon: "professionals" },
       { href: "/admin/categories", label: "Service Categories", icon: "categories" },
+      { href: "/admin/areas", label: "Areas", icon: "categories" },
       { href: "/admin/requests", label: "Service Requests", icon: "requests" },
       { href: "/admin/bookings", label: "Bookings", icon: "bookings" },
       { href: "/admin/inspections", label: "Inspections & Quotations", icon: "inspections" },

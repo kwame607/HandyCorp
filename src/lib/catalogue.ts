@@ -23,7 +23,7 @@ export async function getCatalogue(): Promise<Catalogue> {
       supabase.from("service_categories").select("id, slug, name, summary, description, photo_path, photo_alt").order("sort_order"),
       supabase.from("services").select("category_id, slug, name, keywords").order("sort_order"),
       supabase.from("popular_services").select("label, services(slug)").order("sort_order"),
-      supabase.from("areas").select("name").order("sort_order"),
+      supabase.from("areas").select("name").order("sort_order").order("name"),
     ]);
     if (cats.error || svcs.error || pop.error || ar.error) {
       throw new Error((cats.error || svcs.error || pop.error || ar.error)?.code || "query failed");

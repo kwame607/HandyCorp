@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
+import LocationMap from "@/components/LocationMap";
 import { signOut } from "../actions";
 
 export const metadata = { title: "Your account | HandyCorp" };
@@ -17,6 +18,11 @@ async function Account() {
         <div className="flex justify-between gap-4 py-3"><dt className="text-slate">Email</dt><dd>{user.email}</dd></div>
         <div className="flex justify-between gap-4 py-3"><dt className="text-slate">Phone</dt><dd>{user.phone ?? "Not given"}</dd></div>
       </dl>
+      <section className="mt-10" aria-labelledby="where">
+        <h2 id="where" className="font-display text-xl font-bold">Where you are</h2>
+        <p className="mb-4 mt-1 text-slate">See your current location on the map of Kumasi. This is how we&apos;ll match you with professionals nearby.</p>
+        <LocationMap />
+      </section>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/services" className="rounded-md bg-gold px-6 py-3 font-bold hover:bg-gold-deep">Browse services</Link>
         <form action={signOut}>

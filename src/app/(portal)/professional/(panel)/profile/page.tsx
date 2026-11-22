@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
+import AreaPicker from "@/components/AreaPicker";
 import DocumentManager from "@/components/professional/DocumentManager";
 import { requireRole } from "@/lib/auth";
 import { getCatalogue } from "@/lib/catalogue";
@@ -59,16 +60,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/professional/p
         </div>
         <fieldset>
           <legend className="text-sm font-medium">Areas you cover</legend>
-          <ul className="mt-2 grid gap-x-8 sm:grid-cols-2">
-            {areas.map((a) => (
-              <li key={a}>
-                <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b border-line py-2">
-                  <input type="checkbox" name="areas" value={a} defaultChecked={mine.has(a)} className="h-5 w-5 accent-ink" />
-                  {a}
-                </label>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-2"><AreaPicker areas={areas} name="areas" defaultSelected={areas.filter((a) => mine.has(a))} /></div>
         </fieldset>
         <button className="rounded-md bg-gold px-5 py-3 font-bold hover:bg-gold-deep">Save changes</button>
       </form>

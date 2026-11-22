@@ -16,7 +16,7 @@ async function admin() {
 }
 
 function done(path: string, ok: boolean, msg?: string): never {
-  if (ok && path.startsWith("/admin/categories")) updateTag("catalogue");
+  if (ok && (path.startsWith("/admin/categories") || path.startsWith("/admin/areas"))) updateTag("catalogue");
   const sep = path.includes("?") ? "&" : "?";
   redirect(`${path}${sep}${ok ? "saved=1" : `error=${encodeURIComponent(msg ?? "1")}`}`);
 }
@@ -97,4 +97,21 @@ export async function decideWorkRequest(f: FormData) {
   if (error) console.error("[admin] work request decision failed:", error.code || "no code");
   const msg = error && /note|reason/i.test(error.message) ? "Please write a reason when declining." : error && /already/i.test(error.message) ? "This request was already decided." : "Something went wrong. Please try again.";
   done("/admin/professionals/requests", !error, msg);
+}
+
+export async function addArea(f: FormData) {
+  const supabase = await admin();
+  const { error } = await supabase.rpc("admin_add_area", { p_name: field(f, "name") });
+  if (error) console.error("[admin] add area failed:", error.code || "no code");
+  const msg = error?.code === "23505" ? "That area already exists." : error?.code === "22023" ? "Area names must be 2 to 60 characters." : "Something went wrong. Please try again.";
+  done("/admin/areas", !error, msg);
+}
+
+export async function setAreaActive(f: FormData) {
+  const id = field(f, "id");
+  const supabase = await admin();
+  if (!uuid.test(id)) redirect("/admin/areas");
+  const { error } = await supabase.rpc("admin_set_area_active", { p_id: id, p_active: field(f, "active") === "true" });
+  if (error) console.error("[admin] area status failed:", error.code || "no code");
+  done("/admin/areas", !error, "Something went wrong. Please try again.");
 }

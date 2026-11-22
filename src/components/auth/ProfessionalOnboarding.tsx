@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import AreaPicker from "@/components/AreaPicker";
 import { areaSlug } from "@/data/areas";
 import type { Category } from "@/data/services";
 import { experienceOptions } from "@/lib/professional-application";
@@ -280,18 +281,9 @@ export default function ProfessionalOnboarding({ userId, name, categories, areas
             </div>
             <fieldset>
               <legend className="font-medium">Areas you cover</legend>
-              <p className="mt-1 text-sm text-slate">We&apos;re starting in these parts of Kumasi.</p>
+              <p className="mt-1 text-sm text-slate">Choose every part of Kumasi you can travel to.</p>
               <FieldError id="coverage-error" message={errors.coverage} />
-              <ul className="mt-2 grid gap-x-10 sm:grid-cols-2">
-                {areas.map((a) => (
-                  <li key={a}>
-                    <label className="flex min-h-11 cursor-pointer items-center gap-3 border-b border-line py-2">
-                      <input type="checkbox" checked={d.coverage.includes(a)} onChange={() => toggle("coverage", a)} className="h-5 w-5 accent-ink" />
-                      {a}
-                    </label>
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-3"><AreaPicker areas={areas} selected={d.coverage} onChange={(next) => set("coverage", next)} /></div>
             </fieldset>
           </>
         )}
