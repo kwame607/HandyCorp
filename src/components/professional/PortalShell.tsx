@@ -58,7 +58,7 @@ export default function PortalShell({ name, status, children }: { name: string; 
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const title = items.find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`))?.label ?? "Dashboard";
-  const tones: Record<string, string> = { green: "bg-[#e8f3ec] text-[#1f5c36]", amber: "bg-[#fff3d6] text-[#7a4f00]", red: "bg-[#fdf0ee] text-[#9c2019]" };
+  const tones: Record<string, string> = { green: "bg-[#e8f3ec] text-[#1f5c36]", amber: "bg-[#ffeedd] text-[#7a4f00]", red: "bg-[#fdf0ee] text-[#9c2019]" };
 
   const account = (
     <div className="border-t border-line p-3">

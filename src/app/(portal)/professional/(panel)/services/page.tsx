@@ -10,7 +10,7 @@ export const metadata = { title: "My Services | HandyCorp" };
 const box = "rounded-md border border-line bg-white p-5";
 const inputCls = "mt-1 w-full rounded-md border border-ink/25 bg-white px-3 py-2.5 text-[15px]";
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
-const tone: Record<string, string> = { pending: "bg-[#fff3d6] text-[#7a4f00]", approved: "bg-[#e8f3ec] text-[#1f5c36]", declined: "bg-[#fdf0ee] text-[#9c2019]" };
+const tone: Record<string, string> = { pending: "bg-[#ffeedd] text-[#7a4f00]", approved: "bg-[#e8f3ec] text-[#1f5c36]", declined: "bg-[#fdf0ee] text-[#9c2019]" };
 const word: Record<string, string> = { pending: "Waiting", approved: "Approved", declined: "Declined" };
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { timeZone: "Africa/Accra", day: "numeric", month: "short", year: "numeric" });
 

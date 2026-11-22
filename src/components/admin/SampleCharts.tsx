@@ -29,7 +29,7 @@ export function RevenueChart() {
       </div>
       <svg viewBox={`0 0 ${W} ${H + 24}`} role="img" aria-label={`Sample ${period.toLowerCase()} revenue chart`} className="w-full">
         {[0, 0.5, 1].map((t) => (
-          <line key={t} x1={pad} x2={W - pad} y1={H - t * (H - 16)} y2={H - t * (H - 16)} stroke="#E3E0D9" />
+          <line key={t} x1={pad} x2={W - pad} y1={H - t * (H - 16)} y2={H - t * (H - 16)} stroke="#dde3ee" />
         ))}
         {s.jobs.map((v, i) => {
           const h = (v / max) * (H - 16);
@@ -37,15 +37,15 @@ export function RevenueChart() {
           const x = pad + i * bw + bw * 0.2;
           return (
             <g key={i}>
-              <rect x={x} y={H - h} width={bw * 0.6} height={h} fill="#D9D5CB" />
+              <rect x={x} y={H - h} width={bw * 0.6} height={h} fill="#c9d2e3" />
               <rect x={x} y={H - c} width={bw * 0.6} height={c} fill="#17171B" />
-              <text x={x + bw * 0.3} y={H + 16} textAnchor="middle" fontSize="11" fill="#626873">{s.labels[i]}</text>
+              <text x={x + bw * 0.3} y={H + 16} textAnchor="middle" fontSize="11" fill="#4f5b6e">{s.labels[i]}</text>
             </g>
           );
         })}
       </svg>
       <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-slate">
-        <span><span aria-hidden="true" className="mr-1.5 inline-block h-2.5 w-2.5 bg-[#D9D5CB]" />Total value of completed jobs</span>
+        <span><span aria-hidden="true" className="mr-1.5 inline-block h-2.5 w-2.5 bg-[#c9d2e3]" />Total value of completed jobs</span>
         <span><span aria-hidden="true" className="mr-1.5 inline-block h-2.5 w-2.5 bg-ink" />Platform commission</span>
       </p>
     </div>

@@ -46,7 +46,7 @@ export default function LocationMap({ areas = [] }: { areas?: Area[] }) {
     if (!pin.current) {
       const icon = L.divIcon({
         className: "",
-        html: '<div style="width:26px;height:26px;border-radius:50%;background:#1a1a1a;border:4px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5)"></div>',
+        html: '<div style="width:26px;height:26px;border-radius:50%;background:#001d57;border:4px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.5)"></div>',
         iconSize: [26, 26],
         iconAnchor: [13, 13],
       });
@@ -64,7 +64,7 @@ export default function LocationMap({ areas = [] }: { areas?: Area[] }) {
     ring.current?.remove();
     ring.current = null;
     if (accuracy != null && accuracy > 30) {
-      ring.current = L.circle(at, { radius: accuracy, color: "#9a7410", weight: 1, fillOpacity: 0.12, interactive: false }).addTo(m);
+      ring.current = L.circle(at, { radius: accuracy, color: "#e85d00", weight: 1, fillOpacity: 0.12, interactive: false }).addTo(m);
     }
     m.setView(at, zoom ?? Math.max(m.getZoom(), accuracy != null && accuracy > 1000 ? 13 : 16));
   }

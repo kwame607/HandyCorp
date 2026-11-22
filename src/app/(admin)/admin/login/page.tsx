@@ -37,7 +37,7 @@ export default function Page({ searchParams }: PageProps<"/admin/login">) {
         </div>
         <h1 className="font-display text-3xl font-bold tracking-tight">HandyCorp Administration</h1>
         <p className="mt-2 text-lg text-slate">Sign in to manage the HandyCorp marketplace.</p>
-        <div className="mt-8 rounded-md border border-line bg-white p-6 shadow-[0_1px_0_rgba(23,23,27,0.04)]">
+        <div className="mt-8 rounded-md border border-line bg-white p-6 shadow-[0_1px_0_rgba(0,29,87,0.04)]">
           <Suspense fallback={<p className="text-slate">Loading…</p>}>
             <Form searchParams={searchParams} />
           </Suspense>

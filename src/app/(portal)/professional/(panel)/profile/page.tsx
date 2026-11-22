@@ -36,7 +36,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/professional/p
       <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Profile & Portfolio</h1>
       <p className="mt-1 text-slate">What customers and HandyCorp see about you.</p>
       {sp.saved === "1" && <p role="status" className="mt-6 rounded-md border border-[#1f5c36] bg-[#e8f3ec] p-4 font-medium">Profile saved.</p>}
-      {sp.saved === "review" && <p role="status" className="mt-6 rounded-md border border-gold-deep bg-[#fff6d9] p-4 font-medium">Saved. Because you changed your public name or description, HandyCorp will review the change and your profile will show as under review until then.</p>}
+      {sp.saved === "review" && <p role="status" className="mt-6 rounded-md border border-gold-deep bg-[#fff1e6] p-4 font-medium">Saved. Because you changed your public name or description, HandyCorp will review the change and your profile will show as under review until then.</p>}
       {error && <p role="alert" className="mt-6 rounded-md border border-[#b3261e] bg-[#fdf0ee] p-4 font-medium text-[#9c2019]">{error}</p>}
 
       <form action={updateProfile} className={`${box} mt-6 space-y-5`}>

@@ -41,7 +41,7 @@ async function Body({ searchParams }: PageProps<"/admin">) {
   const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 
   const stat = (icon: string, title: string, value: string, note: string, muted = false) => (
-    <div className="rounded-md border border-line bg-white p-5 shadow-[0_1px_0_rgba(23,23,27,0.04)]">
+    <div className="rounded-md border border-line bg-white p-5 shadow-[0_1px_0_rgba(0,29,87,0.04)]">
       <div className="flex items-center justify-between text-slate">
         <p className="text-[15px]">{title}</p>
         <Icon name={icon} size={18} />
@@ -65,7 +65,7 @@ async function Body({ searchParams }: PageProps<"/admin">) {
         {seePros ? stat("staff", "Pending Verifications", String(pending.count ?? 0), (pending.count ?? 0) > 0 ? "Waiting for a decision" : "Nothing waiting") : stat("staff", "Pending Verifications", "—", "Not part of your role", true)}
       </div>
 
-      <section aria-labelledby="attention" className="mt-6 rounded-md border border-gold-deep bg-[#fff9e8] p-5">
+      <section aria-labelledby="attention" className="mt-6 rounded-md border border-gold-deep bg-[#fff6ee] p-5">
         <h2 id="attention" className="font-display text-base font-bold">Needs your attention</h2>
         <ul className="mt-3 grid gap-x-8 gap-y-2 text-[15px] sm:grid-cols-2">
           {seePros && (

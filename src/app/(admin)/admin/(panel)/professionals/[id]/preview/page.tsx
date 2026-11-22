@@ -21,7 +21,7 @@ async function Body({ params }: { params: PageProps<"/admin/professionals/[id]/p
   return (
     <>
       <Link href={`/admin/professionals/${id}`} className="text-[15px] underline underline-offset-4">Back to registration</Link>
-      <p role="note" className="mt-4 rounded-md border border-gold-deep bg-[#fff6d9] p-4 text-[15px] font-medium">
+      <p role="note" className="mt-4 rounded-md border border-gold-deep bg-[#fff1e6] p-4 text-[15px] font-medium">
         Preview only. This is what {name} sees on their dashboard. Nothing here can be changed.
       </p>
       <div className="mt-6 rounded-md border border-line bg-paper p-6 md:p-10">

@@ -3,7 +3,7 @@ import { PAGE_SIZE, qs, type SP } from "@/lib/admin";
 
 const tones: Record<string, string> = {
   green: "bg-[#e8f3ec] text-[#1f5c36]",
-  amber: "bg-[#fff3d6] text-[#7a4f00]",
+  amber: "bg-[#ffeedd] text-[#7a4f00]",
   red: "bg-[#fdf0ee] text-[#9c2019]",
   grey: "bg-ink/5 text-slate",
 };
@@ -39,7 +39,7 @@ export function PageHeader({ title, text, actions }: { title: string; text?: str
 
 export function Card({ title, children, right, className = "" }: { title?: string; children: React.ReactNode; right?: React.ReactNode; className?: string }) {
   return (
-    <section className={`rounded-md border border-line bg-white shadow-[0_1px_0_rgba(23,23,27,0.04)] ${className}`}>
+    <section className={`rounded-md border border-line bg-white shadow-[0_1px_0_rgba(0,29,87,0.04)] ${className}`}>
       {(title || right) && (
         <div className="flex items-center justify-between gap-4 border-b border-line px-5 py-3.5">
           <h2 className="font-display text-base font-bold">{title}</h2>
@@ -52,7 +52,7 @@ export function Card({ title, children, right, className = "" }: { title?: strin
 }
 
 export function SampleTag() {
-  return <span className="rounded border border-gold-deep bg-[#fff6d9] px-2 py-0.5 text-xs font-semibold">Sample data</span>;
+  return <span className="rounded border border-gold-deep bg-[#fff1e6] px-2 py-0.5 text-xs font-semibold">Sample data</span>;
 }
 
 export function NotConnected({ children }: { children: React.ReactNode }) {

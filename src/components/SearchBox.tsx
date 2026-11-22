@@ -24,7 +24,7 @@ type Props = {
 
 const styles = {
   hero: {
-    wrap: "flex flex-col gap-2 rounded-3xl bg-white p-2 shadow-[0_10px_40px_-12px_rgba(20,22,26,0.25)] ring-1 ring-ink/10 md:flex-row md:items-center md:rounded-full",
+    wrap: "flex flex-col gap-2 rounded-3xl bg-white p-2 shadow-[0_10px_40px_-12px_rgba(0,29,87,0.25)] ring-1 ring-ink/10 md:flex-row md:items-center md:rounded-full",
     field: "rounded-2xl md:rounded-full",
     button: "rounded-2xl px-7 py-4 md:rounded-full",
   },
