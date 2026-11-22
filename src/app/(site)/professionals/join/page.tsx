@@ -124,7 +124,7 @@ export default function JoinPage() {
             Ready to join?
           </h2>
           <p className="mt-3 max-w-xl leading-relaxed text-slate">
-            Registration takes a few minutes. We&apos;re starting with selected areas of Kumasi.
+            Registration takes a few minutes. We&apos;re starting in Greater Accra, Ashanti and Central regions.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
             <Link href="/professional/signup" className="rounded-md bg-gold px-7 py-4 font-bold transition-colors hover:bg-gold-deep">

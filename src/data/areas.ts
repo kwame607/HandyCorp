@@ -2,7 +2,11 @@
 // list. Admins can add or hide areas in the admin panel; this copy is only used
 // if the database can't be reached.
 // The same areas live in the database `areas` table, matched by slug.
-export const areas: string[] = [
+export const regions = ["Greater Accra", "Ashanti", "Central"] as const;
+export type Region = (typeof regions)[number];
+export type Area = { slug: string; name: string; region: Region; lat?: number; lng?: number };
+
+const names: string[] = [
   "Aboabo",
   "Abrepo",
   "Abuakwa",
@@ -74,3 +78,6 @@ export function areaSlug(name: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
+
+// Built-in copy of the Kumasi areas (Ashanti). The full three-region list lives in the database.
+export const areas: Area[] = names.map((name) => ({ slug: areaSlug(name), name, region: "Ashanti" }));

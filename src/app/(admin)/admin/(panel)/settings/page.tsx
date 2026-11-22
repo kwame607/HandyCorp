@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { Card, NotConnected, PageHeader } from "@/components/admin/ui";
@@ -10,7 +11,7 @@ async function Body() {
   await connection();
   const user = await requireRole("admin", "/admin/login", "/admin/settings");
   const supabase = await createClient();
-  const { data: areas } = await supabase.from("areas").select("name, city, is_active").order("sort_order");
+  const { data: areas } = await supabase.from("areas").select("is_active").limit(5000);
   return (
     <>
       <PageHeader title="Settings" text="Platform settings. Critical settings will need extra permission once staff roles exist." />
@@ -23,10 +24,8 @@ async function Body() {
           <p className="mt-3 text-sm text-slate">To change your password, sign out and use “Forgot password?” on the admin sign-in page.</p>
         </Card>
         <Card title="Supported locations">
-          <ul className="divide-y divide-line text-[15px]">
-            {areas?.map((a) => <li key={a.name} className="flex justify-between py-2"><span>{a.name}, {a.city}</span><span className="text-slate">{a.is_active ? "Active" : "Inactive"}</span></li>)}
-          </ul>
-          <p className="mt-3 text-sm text-slate">Read-only for now. Editing locations comes with the move of site lists into the database.</p>
+          <p className="text-[15px]">{areas?.filter((a) => a.is_active).length ?? 0} active areas across Greater Accra, Ashanti and Central.</p>
+          <p className="mt-3 text-sm text-slate">Add or hide areas on the <Link href="/admin/areas" className="underline underline-offset-4">Areas</Link> page.</p>
         </Card>
         <Card title="Commission">
           <NotConnected>No commission rate is set because payments aren&apos;t connected. When they are, the rate will be a setting here, with a confirmation and an audit entry on every change.</NotConnected>

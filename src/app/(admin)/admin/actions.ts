@@ -101,7 +101,7 @@ export async function decideWorkRequest(f: FormData) {
 
 export async function addArea(f: FormData) {
   const supabase = await admin();
-  const { error } = await supabase.rpc("admin_add_area", { p_name: field(f, "name") });
+  const { error } = await supabase.rpc("admin_add_area", { p_name: field(f, "name"), p_region: field(f, "region") });
   if (error) console.error("[admin] add area failed:", error.code || "no code");
   const msg = error?.code === "23505" ? "That area already exists." : error?.code === "22023" ? "Area names must be 2 to 60 characters." : "Something went wrong. Please try again.";
   done("/admin/areas", !error, msg);

@@ -52,7 +52,7 @@ async function SearchArea({
 
 export default async function ServicesPage(props: PageProps<"/services">) {
   const { categories, areas, popular } = await getCatalogue();
-  const lists = { categories, areas };
+  const lists = { categories, areas: [...new Set(areas.map((a) => a.name))] };
   return (
     <main>
       <section className="mx-auto w-full max-w-6xl px-5 pb-12 pt-8 md:pb-14 md:pt-10">

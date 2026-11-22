@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { areaSlug } from "@/data/areas";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
@@ -49,7 +48,7 @@ export async function updateProfile(f: FormData) {
     p_description: field(f, "description"),
     p_work_address: field(f, "workAddress"),
     p_extra_experience: field(f, "extra"),
-    p_area_slugs: areas.map(areaSlug),
+    p_area_slugs: areas,
   });
   if (error) {
     console.error("[portal] update profile failed:", error.code || "no code");

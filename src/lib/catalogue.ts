@@ -1,12 +1,12 @@
 import { cacheLife, cacheTag } from "next/cache";
-import { areas as fallbackAreas } from "@/data/areas";
+import { areas as fallbackAreas, type Area, type Region } from "@/data/areas";
 import { categories as fallbackCategories, popularServices as fallbackPopular, type Category } from "@/data/services";
 import { createAnonClient } from "@/lib/supabase";
 
 export type Catalogue = {
   categories: Category[];
   popular: { label: string; service: string }[];
-  areas: string[];
+  areas: Area[];
 };
 
 // The live lists of categories, services and areas, read from the database.
@@ -23,7 +23,7 @@ export async function getCatalogue(): Promise<Catalogue> {
       supabase.from("service_categories").select("id, slug, name, summary, description, photo_path, photo_alt").order("sort_order"),
       supabase.from("services").select("category_id, slug, name, keywords").order("sort_order"),
       supabase.from("popular_services").select("label, services(slug)").order("sort_order"),
-      supabase.from("areas").select("name").order("sort_order").order("name"),
+      supabase.from("areas").select("slug, name, region, latitude, longitude").order("name"),
     ]);
     if (cats.error || svcs.error || pop.error || ar.error) {
       throw new Error((cats.error || svcs.error || pop.error || ar.error)?.code || "query failed");
@@ -50,7 +50,7 @@ export async function getCatalogue(): Promise<Catalogue> {
       .filter((p) => live.has(p.service));
 
     if (categories.length === 0) throw new Error("empty catalogue");
-    return { categories, popular, areas: (ar.data ?? []).map((a) => a.name) };
+    return { categories, popular, areas: (ar.data ?? []).map((a): Area => ({ slug: a.slug, name: a.name, region: a.region as Region, lat: a.latitude ?? undefined, lng: a.longitude ?? undefined })) };
   } catch (e) {
     console.error("[catalogue] Using the built-in lists:", e instanceof Error ? e.message : "unknown error");
     return { categories: fallbackCategories, popular: fallbackPopular, areas: fallbackAreas };

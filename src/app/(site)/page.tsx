@@ -40,7 +40,7 @@ export default async function Home() {
           className="hero-rise mt-10 md:mt-14 lg:max-w-4xl"
           style={{ animationDelay: "0.2s" }}
         >
-          <SearchBox categories={categories} areas={areas} />
+          <SearchBox categories={categories} areas={[...new Set(areas.map((a) => a.name))]} />
         </div>
       </section>
 

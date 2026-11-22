@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import AreaPicker from "@/components/AreaPicker";
-import { areaSlug } from "@/data/areas";
+import type { Area } from "@/data/areas";
 import type { Category } from "@/data/services";
 import { experienceOptions } from "@/lib/professional-application";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
@@ -65,7 +65,7 @@ function FilePicker(props: {
   );
 }
 
-export default function ProfessionalOnboarding({ userId, name, categories, areas }: { userId: string; name: string; categories: Category[]; areas: string[] }) {
+export default function ProfessionalOnboarding({ userId, name, categories, areas }: { userId: string; name: string; categories: Category[]; areas: Area[] }) {
   const [step, setStep] = useState(2);
   const [d, setD] = useState<Data>({
     displayName: "", category: "", services: [], description: "", experience: "",
@@ -156,7 +156,7 @@ export default function ProfessionalOnboarding({ userId, name, categories, areas
         p_work_address: d.workAddress,
         p_extra_experience: d.extraExperience,
         p_service_slugs: d.services,
-        p_area_slugs: d.coverage.map(areaSlug),
+        p_area_slugs: d.coverage,
         p_documents: docs,
       });
       if (error) throw new Error("save");
@@ -312,7 +312,7 @@ export default function ProfessionalOnboarding({ userId, name, categories, areas
               {row("Experience", experienceOptions.find((o) => o.value === d.experience)?.label ?? "")}
               {row("Location", `${d.area}, ${d.city}, ${d.region}`)}
               {row("Work address", d.workAddress)}
-              {row("Areas covered", d.coverage.join(", "))}
+              {row("Areas covered", d.coverage.map((c) => areas.find((a) => a.slug === c)?.name ?? c).join(", "))}
               {row("Profile photo", files.photo.length ? files.photo[0].name : "")}
               {row("Work photos", `${files.portfolio.length} selected`)}
               {row("Certificates", `${files.certificates.length} selected`)}

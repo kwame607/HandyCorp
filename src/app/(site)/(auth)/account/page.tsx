@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { requireRole } from "@/lib/auth";
+import { getCatalogue } from "@/lib/catalogue";
 import LocationMap from "@/components/LocationMap";
 import { signOut } from "../actions";
 
@@ -8,6 +9,7 @@ export const metadata = { title: "Your account | HandyCorp" };
 
 async function Account() {
   const user = await requireRole("customer", "/login", "/account");
+  const { areas } = await getCatalogue();
   return (
     <>
       <h1 className="font-display text-3xl font-bold tracking-tight">Hello, {user.fullName.split(" ")[0]}</h1>
@@ -20,8 +22,8 @@ async function Account() {
       </dl>
       <section className="mt-10" aria-labelledby="where">
         <h2 id="where" className="font-display text-xl font-bold">Where you are</h2>
-        <p className="mb-4 mt-1 text-slate">See your current location on the map of Kumasi. This is how we&apos;ll match you with professionals nearby.</p>
-        <LocationMap />
+        <p className="mb-4 mt-1 text-slate">See your current location on the map. This is how we&apos;ll match you with professionals nearby.</p>
+        <LocationMap areas={areas} />
       </section>
       <div className="mt-8 flex flex-wrap gap-3">
         <Link href="/services" className="rounded-md bg-gold px-6 py-3 font-bold hover:bg-gold-deep">Browse services</Link>

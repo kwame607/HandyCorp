@@ -3,12 +3,20 @@
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef, useState } from "react";
 import type { Map as LeafletMap, LayerGroup } from "leaflet";
+import type { Area } from "@/data/areas";
 
-const KUMASI: [number, number] = [6.6885, -1.6244];
+// Centre of Greater Accra, Ashanti and Central, so all three regions are in view.
+const START: [number, number] = [6.1, -1.3];
+
+function km(a: [number, number], b: [number, number]) {
+  const r = Math.PI / 180;
+  const h = Math.sin(((b[0] - a[0]) * r) / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(((b[1] - a[1]) * r) / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
 
 // Shows a map of Kumasi. Only when the person presses the button do we ask the
 // browser for their location. It is drawn on the map and is not sent or saved anywhere.
-export default function LocationMap() {
+export default function LocationMap({ areas = [] }: { areas?: Area[] }) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<LeafletMap | null>(null);
   const layer = useRef<LayerGroup | null>(null);
@@ -22,7 +30,7 @@ export default function LocationMap() {
       const L = await import("leaflet");
       if (dead || !el.current || map.current) return;
       lib.current = L;
-      const m = L.map(el.current, { scrollWheelZoom: false }).setView(KUMASI, 12);
+      const m = L.map(el.current, { scrollWheelZoom: false }).setView(START, 8);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -55,7 +63,19 @@ export default function LocationMap() {
           L.circleMarker(at, { radius: 8, color: "#fff", weight: 3, fillColor: "#1a1a1a", fillOpacity: 1 }).bindTooltip("You are here").addTo(layer.current);
           m.setView(at, pos.coords.accuracy > 1000 ? 14 : 16);
         }
-        setStatus(`Showing your location, accurate to about ${Math.round(pos.coords.accuracy)} metres.`);
+        const at: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        let best: { a: Area; d: number } | null = null;
+        for (const a of areas) {
+          if (a.lat == null || a.lng == null) continue;
+          const d = km(at, [a.lat, a.lng]);
+          if (!best || d < best.d) best = { a, d };
+        }
+        const near = best
+          ? best.d <= 25
+            ? ` Nearest area: ${best.a.name}, ${best.a.region}.`
+            : " You look to be outside the regions we cover for now."
+          : "";
+        setStatus(`Showing your location, accurate to about ${Math.round(pos.coords.accuracy)} metres.${near}`);
         setBusy(false);
       },
       (err) => {
@@ -68,7 +88,7 @@ export default function LocationMap() {
 
   return (
     <div>
-      <div ref={el} role="region" aria-label="Map of Kumasi" className="z-0 h-72 w-full rounded-md border border-line bg-sand sm:h-96" />
+      <div ref={el} role="region" aria-label="Map of Greater Accra, Ashanti and Central regions" className="z-0 h-72 w-full rounded-md border border-line bg-sand sm:h-96" />
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button type="button" onClick={locate} disabled={busy} className="rounded-md bg-gold px-5 py-3 font-bold hover:bg-gold-deep disabled:opacity-60">
           Show my location

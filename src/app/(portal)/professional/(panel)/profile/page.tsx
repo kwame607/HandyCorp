@@ -20,12 +20,12 @@ async function Body({ searchParams }: { searchParams: PageProps<"/professional/p
   const supabase = await createClient();
   const [{ data: pp }, { data: ar }, { data: docs }, { areas }] = await Promise.all([
     supabase.from("professional_profiles").select("display_name, description, work_address, extra_experience, status").eq("user_id", user.id).maybeSingle(),
-    supabase.from("professional_areas").select("areas(name)").eq("user_id", user.id),
+    supabase.from("professional_areas").select("areas(slug)").eq("user_id", user.id),
     supabase.from("professional_documents").select("id, kind, file_name, storage_path").eq("user_id", user.id).order("created_at"),
     getCatalogue(),
   ]);
   if (!pp) return null;
-  const mine = new Set((ar ?? []).map((a) => one(a.areas)?.name));
+  const mine = new Set((ar ?? []).map((a) => one(a.areas)?.slug));
   const paths = (docs ?? []).map((d) => d.storage_path);
   const { data: signed } = paths.length ? await supabase.storage.from("professional-uploads").createSignedUrls(paths, 600) : { data: [] };
   const list = (docs ?? []).map((d) => ({ id: d.id, kind: d.kind, file_name: d.file_name, url: signed?.find((s) => s.path === d.storage_path)?.signedUrl }));
@@ -60,7 +60,7 @@ async function Body({ searchParams }: { searchParams: PageProps<"/professional/p
         </div>
         <fieldset>
           <legend className="text-sm font-medium">Areas you cover</legend>
-          <div className="mt-2"><AreaPicker areas={areas} name="areas" defaultSelected={areas.filter((a) => mine.has(a))} /></div>
+          <div className="mt-2"><AreaPicker areas={areas} name="areas" defaultSelected={areas.filter((a) => mine.has(a.slug)).map((a) => a.slug)} /></div>
         </fieldset>
         <button className="rounded-md bg-gold px-5 py-3 font-bold hover:bg-gold-deep">Save changes</button>
       </form>
