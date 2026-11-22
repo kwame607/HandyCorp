@@ -5,7 +5,9 @@
 //   node scripts/import-places.mjs --from saved.json    (test with a saved Overpass response)
 //
 // Needs Node 18+ and internet access. Data (c) OpenStreetMap contributors, ODbL.
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+
+const CACHE = "scripts/.places-cache.json"; // keeps finished regions so a retry only fetches what is missing
 
 const REGIONS = [
   { name: "Greater Accra", match: "^Greater Accra" },
@@ -14,7 +16,12 @@ const REGIONS = [
 ];
 const KINDS = "city|town|suburb|neighbourhood|quarter";
 const OUT = "supabase/migrations/20261122000012_ghana_places.sql";
-const ENDPOINTS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"];
+const ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+];
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 const sql = (s) => `'${String(s).replace(/'/g, "''")}'`;
@@ -30,30 +37,46 @@ out tags center;`;
 
 async function fetchRegion(region) {
   let lastError;
-  for (const url of ENDPOINTS) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "HandyCorp-import/1.0" },
-        body: "data=" + encodeURIComponent(query(region)),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()).elements ?? [];
-    } catch (e) {
-      lastError = e;
-      console.error(`  ${url} failed: ${e.message}`);
+  for (let round = 1; round <= 4; round++) {
+    for (const url of ENDPOINTS) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded", "User-Agent": "HandyCorp-import/1.0" },
+          body: "data=" + encodeURIComponent(query(region)),
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        if (json.remark && !(json.elements ?? []).length) throw new Error(String(json.remark).slice(0, 80));
+        return json.elements ?? [];
+      } catch (e) {
+        lastError = e;
+        console.error(`  ${url} failed: ${e.message}`);
+      }
     }
+    console.error(`  Waiting ${round * 20} seconds before trying again…`);
+    await sleep(round * 20000);
   }
   throw lastError;
 }
 
 const fromIdx = process.argv.indexOf("--from");
 const saved = fromIdx > -1 ? JSON.parse(readFileSync(process.argv[fromIdx + 1], "utf8")) : null;
+const cache = !saved && existsSync(CACHE) ? JSON.parse(readFileSync(CACHE, "utf8")) : {};
 
 const rows = new Map(); // key: region|name lowercased
 for (const region of REGIONS) {
   console.log(`Fetching ${region.name}…`);
-  const els = saved ? (saved[region.name] ?? []) : await fetchRegion(region);
+  let els;
+  if (saved) els = saved[region.name] ?? [];
+  else if (cache[region.name]) {
+    els = cache[region.name];
+    console.log("  using the copy saved from the last run");
+  } else {
+    els = await fetchRegion(region);
+    cache[region.name] = els;
+    writeFileSync(CACHE, JSON.stringify(cache));
+  }
   let n = 0;
   for (const el of els) {
     const name = (el.tags?.name ?? "").trim();
@@ -66,7 +89,7 @@ for (const region of REGIONS) {
     n++;
   }
   console.log(`  ${n} places`);
-  if (!saved) await new Promise((r) => setTimeout(r, 3000));
+  if (!saved && !cache[region.name + ":done"]) await sleep(3000);
 }
 
 const list = [...rows.values()].sort((a, b) => a.region.localeCompare(b.region) || a.name.localeCompare(b.name));
