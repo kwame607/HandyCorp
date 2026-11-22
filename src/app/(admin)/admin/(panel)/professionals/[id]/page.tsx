@@ -104,6 +104,11 @@ async function Body({ params, searchParams }: PageProps<"/admin/professionals/[i
         </div>
 
         <div className="space-y-6">
+          <Card title="Preview">
+            <p className="text-[15px] text-slate">See their dashboard exactly as they see it, including your latest message.</p>
+            <Link href={`/admin/professionals/${id}/preview`} className="mt-3 inline-block rounded-md border border-ink/30 px-4 py-2.5 text-[15px] font-semibold hover:bg-ink/5">Preview their dashboard</Link>
+          </Card>
+
           <Card title="Verification decision">
             <form action={setProfessionalStatus} className="space-y-4">
               <input type="hidden" name="id" value={id} />
