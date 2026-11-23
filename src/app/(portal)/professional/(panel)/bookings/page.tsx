@@ -21,6 +21,8 @@ async function Body({ searchParams }: { searchParams: Promise<Record<string, str
     .eq("professional_id", user.id)
     .order("created_at", { ascending: false });
   const rows = data ?? [];
+  const payState = await Promise.all(rows.map((b) => supabase.rpc("booking_payment_status", { p_booking: b.id }).then((r) => (r.data as string | null) ?? "unpaid")));
+  const payouts = await supabase.from("payouts").select("booking_id, status, due_at, amount").eq("professional_id", user.id);
   const contacts = await Promise.all(rows.map((b) => (b.status === "cancelled" ? null : supabase.rpc("booking_contact", { p_id: b.id }).then((r) => r.data?.[0] ?? null))));
 
   return (
@@ -48,6 +50,12 @@ async function Body({ searchParams }: { searchParams: Promise<Record<string, str
                 <p className="mt-1 text-sm text-slate">{b.ref} · booked {day(b.created_at)}{r?.preferred_date ? ` · customer wants ${day(r.preferred_date)}` : ""}</p>
                 <p className="mt-2 whitespace-pre-wrap">{r?.description}</p>
                 <p className="mt-2 font-bold">{money(b.agreed_total)}</p>
+                {(() => {
+                  const po = payouts.data?.find((x) => x.booking_id === b.id);
+                  if (po) return <p className="mt-1 text-[15px]">Your payout: <strong>{money(po.amount)}</strong> — {po.status === "sent" ? "sent" : `due after ${day(po.due_at)}`}.</p>;
+                  if (payState[idx] === "paid") return <p className="mt-1 text-[15px]">The customer has paid online. You are paid after you complete the job.</p>;
+                  return null;
+                })()}
                 {c && (
                   <p className="mt-2 text-[15px]">
                     Customer: <strong>{c.other_name}</strong>{c.other_phone ? <> · <a className="underline" href={`tel:${c.other_phone}`}>{c.other_phone}</a></> : null}

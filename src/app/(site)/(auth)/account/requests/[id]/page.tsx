@@ -7,10 +7,11 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { day, money, stamp, statusLabel } from "@/lib/format";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
-import { cancelBooking, cancelRequest, respondQuote, sendMessage, submitReview } from "../actions";
+import { verifyAndRecord } from "@/lib/paystack";
+import { cancelBooking, cancelRequest, respondQuote, sendMessage, startPayment, submitReview } from "../actions";
 
 export const metadata = { title: "Request | HandyCorp" };
-type Search = { sent?: string; done?: string; error?: string };
+type Search = { sent?: string; done?: string; error?: string; reference?: string };
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 const btn = "rounded-md px-5 py-2.5 font-bold";
 
@@ -18,6 +19,9 @@ async function Body({ id, search }: { id: string; search: Search }) {
   await connection();
   await requireRole("customer", "/login", `/account/requests/${id}`);
   if (!/^[0-9a-f-]{36}$/.test(id)) notFound();
+  // Back from Paystack: confirm the payment with Paystack before showing the page.
+  let paidNow: string | null = null;
+  if (search.reference) paidNow = await verifyAndRecord(search.reference).catch(() => "failed");
   const supabase = await createClient();
   const { data: r } = await supabase
     .from("service_requests")
@@ -38,6 +42,10 @@ async function Body({ id, search }: { id: string; search: Search }) {
     ? (await supabase.storage.from("request-uploads").createSignedUrls(photos.data.map((p) => p.storage_path), 600)).data ?? []
     : [];
   const contact = booking.data && booking.data.status !== "cancelled" ? (await supabase.rpc("booking_contact", { p_id: booking.data.id })).data?.[0] : null;
+  const payment = booking.data
+    ? (await supabase.from("payments").select("status, amount").eq("booking_id", booking.data.id).eq("kind", "job").order("created_at", { ascending: false }).limit(1).maybeSingle()).data
+    : null;
+  const payOpen = booking.data ? ((await supabase.rpc("payments_open")).data === true) : false;
   const review = booking.data?.status === "completed"
     ? (await supabase.from("reviews").select("rating, comment, reply").eq("booking_id", booking.data.id).maybeSingle()).data
     : null;
@@ -83,7 +91,23 @@ async function Body({ id, search }: { id: string; search: Search }) {
       {booking.data && (
         <section className="mt-10 rounded-md border border-ink bg-white p-5" aria-labelledby="bk">
           <h2 id="bk" className="font-display text-xl font-bold">Booking {booking.data.ref}: {statusLabel[booking.data.status]}</h2>
-          <p className="mt-1">Agreed price: <strong>{money(booking.data.agreed_total)}</strong>. Pay the professional directly, as agreed. HandyCorp does not take payment yet.</p>
+          <p className="mt-1">Agreed price: <strong>{money(booking.data.agreed_total)}</strong>.{!payOpen && " Pay the professional directly, as agreed. HandyCorp does not take payment yet."}</p>
+          {paidNow === "recorded" && <p role="status" className="mt-2 font-semibold">Payment received. Thank you.</p>}
+          {paidNow === "pending" && <p role="status" className="mt-2">Your payment is still being confirmed. Refresh this page in a minute.</p>}
+          {paidNow === "failed" && payment?.status !== "paid" && <p role="alert" className="mt-2 text-red-800">The payment did not go through. You can try again below.</p>}
+          {payOpen && booking.data.status !== "cancelled" && (
+            payment?.status === "paid" ? (
+              <p className="mt-2 font-semibold">Paid: {money(payment.amount)}. HandyCorp pays the professional after the job is completed.</p>
+            ) : payment?.status === "refund_due" || payment?.status === "refunded" ? (
+              <p className="mt-2">Refund: {payment.status === "refunded" ? "sent" : "being processed"}.</p>
+            ) : (
+              <form action={startPayment} className="mt-3">
+                <input type="hidden" name="id" value={id} /><input type="hidden" name="booking" value={booking.data.id} />
+                <button className={`${btn} bg-gold hover:bg-gold-deep`}>Pay {money(booking.data.agreed_total)} online</button>
+                <p className="mt-1 text-sm text-slate">Pay with mobile money or card through Paystack. HandyCorp pays the professional after the job is completed.</p>
+              </form>
+            )
+          )}
           {contact && <p className="mt-2">Professional: <strong>{contact.other_name}</strong>{contact.other_phone ? <> · <a className="underline" href={`tel:${contact.other_phone}`}>{contact.other_phone}</a></> : null}</p>}
           {booking.data.status === "cancelled" && booking.data.cancel_reason && <p className="mt-2 text-slate">Reason: {booking.data.cancel_reason}</p>}
           {["confirmed", "in_progress"].includes(booking.data.status) && (
@@ -216,5 +240,5 @@ async function Resolve(props: PageProps<"/account/requests/[id]">) {
   const [{ id }, search] = await Promise.all([props.params, props.searchParams]);
   const s = search as Record<string, string | string[] | undefined>;
   const pick = (k: string) => (typeof s[k] === "string" ? (s[k] as string).slice(0, 200) : undefined);
-  return <Body id={id} search={{ sent: pick("sent"), done: pick("done"), error: pick("error") }} />;
+  return <Body id={id} search={{ sent: pick("sent"), done: pick("done"), error: pick("error"), reference: pick("reference") }} />;
 }
