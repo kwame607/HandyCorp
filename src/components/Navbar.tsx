@@ -10,9 +10,11 @@ import { CloseIcon, MenuIcon } from "./icons";
 
 const links = [
   { href: "/services", label: "Explore Services", section: "/services" },
+  { href: "/professionals", label: "Find Professionals", match: (p: string) => p.startsWith("/professionals") && !p.startsWith("/professionals/join") },
   { href: "/#how-it-works", label: "How It Works" },
-  { href: "/professionals/join", label: "Become a Professional", section: "/professionals" },
+  { href: "/professionals/join", label: "Become a Professional", section: "/professionals/join" },
 ];
+type NavLink = (typeof links)[number];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -20,8 +22,8 @@ export default function Navbar() {
   const user = useAuthState();
   const home = user?.role === "professional" ? "/professional/dashboard" : "/account";
 
-  const isActive = (section?: string) =>
-    !!section && (pathname === section || pathname.startsWith(`${section}/`));
+  const isActive = (l: NavLink) =>
+    l.match ? l.match(pathname) : !!l.section && (pathname === l.section || pathname.startsWith(`${l.section}/`));
 
   const linkClass = (active: boolean) =>
     `text-[15px] font-medium transition-colors hover:text-ink ${
@@ -37,7 +39,7 @@ export default function Navbar() {
 
         <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
           {links.map((l) => {
-            const active = isActive(l.section);
+            const active = isActive(l);
             return (
               <Link
                 key={l.href}
@@ -101,7 +103,7 @@ export default function Navbar() {
         >
           <nav aria-label="Mobile" className="flex flex-col">
             {links.map((l) => {
-              const active = isActive(l.section);
+              const active = isActive(l);
               return (
                 <Link
                   key={l.href}
