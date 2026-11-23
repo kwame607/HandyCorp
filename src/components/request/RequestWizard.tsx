@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Area } from "@/data/areas";
 import { NEAR_KM, nearestArea } from "@/lib/geo";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
+import { notifyRequestSent } from "@/app/(site)/(auth)/account/requests/actions";
 import Combobox from "@/components/Combobox";
 import AddressPicker, { type Place } from "./AddressPicker";
 
@@ -131,6 +132,8 @@ export default function RequestWizard({ services, areas, initialService }: { ser
       setBusy(false);
       return setError(friendly(e?.message));
     }
+    // Email the professionals. If email is not set up or fails, the request is still sent.
+    await notifyRequestSent(String(data)).catch(() => {});
     router.push(`/account/requests/${data}?sent=1`);
   }
 

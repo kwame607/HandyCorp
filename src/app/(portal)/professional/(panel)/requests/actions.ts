@@ -3,24 +3,29 @@
 import { redirect } from "next/navigation";
 import { requireRole } from "@/lib/auth";
 import { dbMessage } from "@/lib/format";
+import { notify, type NotifyEvent } from "@/lib/notify";
 import { createClient } from "@/lib/supabase/server";
 
 const text = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
+type Result = { data?: unknown; error: { code?: string; message?: string } | null };
 
-async function run(back: string, fn: (s: Awaited<ReturnType<typeof createClient>>) => PromiseLike<{ error: { code?: string; message?: string } | null }>, ok: string) {
+async function run(back: string, fn: (s: Awaited<ReturnType<typeof createClient>>) => PromiseLike<Result>, ok: string, mail?: (data: unknown) => [NotifyEvent, string] | null) {
   await requireRole("professional", "/professional/login", back);
-  const { error } = await fn(await createClient());
+  const supabase = await createClient();
+  const { data, error } = await fn(supabase);
+  const m = !error && mail ? mail(data) : null;
+  if (m) await notify(supabase, m[0], m[1]);
   redirect(`${back}?${error ? `error=${encodeURIComponent(dbMessage(error))}` : `done=${encodeURIComponent(ok)}`}`);
 }
 
 export async function declineRequest(f: FormData) {
   const id = text(f, "id");
-  await run(`/professional/requests/${id}`, (s) => s.rpc("decline_invitation", { p_id: id, p_reason: text(f, "reason") || null }), "Request declined.");
+  await run(`/professional/requests/${id}`, (s) => s.rpc("decline_invitation", { p_id: id, p_reason: text(f, "reason") || null }), "Request declined.", () => ["declined", id]);
 }
 
 export async function sendMessage(f: FormData) {
   const id = text(f, "id");
-  await run(`/professional/requests/${id}`, (s) => s.rpc("post_request_message", { p_invitation: id, p_body: text(f, "body") }), "Message sent.");
+  await run(`/professional/requests/${id}`, (s) => s.rpc("post_request_message", { p_invitation: id, p_body: text(f, "body") }), "Message sent.", () => ["message", id]);
 }
 
 export async function submitQuote(f: FormData) {
@@ -45,6 +50,7 @@ export async function submitQuote(f: FormData) {
       p_items: items,
     }),
     "Quote sent to the customer.",
+    (quote) => (typeof quote === "string" ? ["quote", quote] : null),
   );
 }
 
@@ -55,5 +61,6 @@ export async function withdrawQuote(f: FormData) {
 
 export async function updateBooking(f: FormData) {
   const status = text(f, "status");
-  await run("/professional/bookings", (s) => s.rpc("update_booking_status", { p_id: text(f, "booking"), p_status: status, p_reason: text(f, "reason") || null }), status === "cancelled" ? "Booking cancelled." : "Booking updated.");
+  const booking = text(f, "booking");
+  await run("/professional/bookings", (s) => s.rpc("update_booking_status", { p_id: booking, p_status: status, p_reason: text(f, "reason") || null }), status === "cancelled" ? "Booking cancelled." : "Booking updated.", () => ["booking_update", booking]);
 }
