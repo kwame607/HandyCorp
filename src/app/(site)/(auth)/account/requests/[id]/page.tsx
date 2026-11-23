@@ -44,7 +44,7 @@ async function Body({ id, search }: { id: string; search: Search }) {
   const svc = one(r.services);
   const ar = one(r.areas);
   const { data: me } = await supabase.auth.getUser();
-  const list = (pros.data ?? []) as { invitation_id: string; name: string; status: string; decline_reason: string | null }[];
+  const list = (pros.data ?? []) as { invitation_id: string; professional_id: string; name: string; status: string; decline_reason: string | null }[];
   const open = r.status === "open";
 
   return (
@@ -136,7 +136,7 @@ async function Body({ id, search }: { id: string; search: Search }) {
               const msgs = (messages.data ?? []).filter((m) => m.invitation_id === p.invitation_id);
               return (
                 <li key={p.invitation_id} className="rounded-md border border-line bg-white p-5">
-                  <p className="flex flex-wrap items-center justify-between gap-2"><span className="font-bold">{p.name}</span><span className="rounded bg-sand px-2 py-0.5 text-sm font-semibold">{statusLabel[p.status]}</span></p>
+                  <p className="flex flex-wrap items-center justify-between gap-2"><Link href={`/professionals/${p.professional_id}`} className="font-bold underline-offset-4 hover:underline">{p.name}</Link><span className="rounded bg-sand px-2 py-0.5 text-sm font-semibold">{statusLabel[p.status]}</span></p>
                   {p.status === "declined" && <p className="mt-1 text-slate">{p.decline_reason ? `Reason: ${p.decline_reason}` : "No reason given."}</p>}
                   {qs.map((q) => {
                     const items = [...(q.quotation_items ?? [])].sort((a, b) => a.sort - b.sort);

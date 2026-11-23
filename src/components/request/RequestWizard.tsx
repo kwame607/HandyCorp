@@ -238,7 +238,7 @@ export default function RequestWizard({ services, areas, initialService }: { ser
                       className="mt-1 size-5 shrink-0"
                     />
                     <span className="min-w-0">
-                      <span className="block font-bold">{p.name} <span className="ml-1 rounded bg-sand px-2 py-0.5 text-xs font-semibold">Verified</span></span>
+                      <span className="block font-bold">{p.name} <span className="ml-1 rounded bg-sand px-2 py-0.5 text-xs font-semibold">Verified</span> <a href={`/professionals/${p.user_id}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="ml-1 text-sm font-semibold underline">View profile</a></span>
                       <span className="block text-sm text-slate">{years[p.experience] ?? p.experience} experience · {p.total ? `★ ${p.average} (${p.total} review${p.total > 1 ? "s" : ""})` : "No reviews yet"}</span>
                       <span className="mt-1 line-clamp-3 block text-[15px]">{p.description}</span>
                     </span>
