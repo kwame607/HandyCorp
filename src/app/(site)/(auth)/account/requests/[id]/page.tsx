@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { day, money, stamp, statusLabel } from "@/lib/format";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
-import { cancelBooking, cancelRequest, respondQuote, sendMessage } from "../actions";
+import { cancelBooking, cancelRequest, respondQuote, sendMessage, submitReview } from "../actions";
 
 export const metadata = { title: "Request | HandyCorp" };
 type Search = { sent?: string; done?: string; error?: string };
@@ -38,6 +38,9 @@ async function Body({ id, search }: { id: string; search: Search }) {
     ? (await supabase.storage.from("request-uploads").createSignedUrls(photos.data.map((p) => p.storage_path), 600)).data ?? []
     : [];
   const contact = booking.data && booking.data.status !== "cancelled" ? (await supabase.rpc("booking_contact", { p_id: booking.data.id })).data?.[0] : null;
+  const review = booking.data?.status === "completed"
+    ? (await supabase.from("reviews").select("rating, comment, reply").eq("booking_id", booking.data.id).maybeSingle()).data
+    : null;
   const svc = one(r.services);
   const ar = one(r.areas);
   const { data: me } = await supabase.auth.getUser();
@@ -88,6 +91,35 @@ async function Body({ id, search }: { id: string; search: Search }) {
               <input type="hidden" name="id" value={id} /><input type="hidden" name="booking" value={booking.data.id} />
               <label className="min-w-56 flex-1"><span className="text-sm font-semibold">Reason for cancelling</span><input name="reason" required minLength={3} maxLength={300} className="mt-1 w-full rounded-md border border-ink/30 px-3 py-2" /></label>
               <ConfirmSubmit label="Cancel booking" requires="reason" title="Cancel this booking?" message="The professional will see that you cancelled and why." tone="danger" />
+            </form>
+          )}
+        </section>
+      )}
+
+      {booking.data?.status === "completed" && (
+        <section className="mt-8 rounded-md border border-line bg-white p-5" aria-labelledby="rv">
+          <h2 id="rv" className="font-display text-xl font-bold">{review ? "Your review" : "How did it go?"}</h2>
+          {review ? (
+            <>
+              <p className="mt-2 text-lg" aria-label={`${review.rating} out of 5`}>{"★".repeat(review.rating)}<span className="text-ink/25">{"★".repeat(5 - review.rating)}</span></p>
+              {review.comment && <p className="mt-1 whitespace-pre-wrap">{review.comment}</p>}
+              {review.reply && <p className="mt-3 border-l-4 border-line pl-3 text-slate"><strong>Reply from the professional:</strong> {review.reply}</p>}
+            </>
+          ) : (
+            <form action={submitReview} className="mt-3 space-y-4">
+              <input type="hidden" name="id" value={id} /><input type="hidden" name="booking" value={booking.data.id} />
+              <fieldset>
+                <legend className="font-semibold">Rating</legend>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {[5, 4, 3, 2, 1].map((n) => (
+                    <label key={n} className="cursor-pointer rounded-md border border-ink/30 px-3 py-2 has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-paper">
+                      <input type="radio" name="rating" value={n} required className="sr-only" />{n} {n === 1 ? "star" : "stars"}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="block"><span className="font-semibold">Comment (optional)</span><textarea name="comment" maxLength={600} rows={3} className="mt-1 w-full rounded-md border border-ink/30 px-3 py-2 text-[16px]" placeholder="Was the work done well, on time and as quoted?" /></label>
+              <button className={`${btn} bg-gold hover:bg-gold-deep`}>Post review</button>
             </form>
           )}
         </section>

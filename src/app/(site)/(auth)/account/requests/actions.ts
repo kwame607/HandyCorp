@@ -53,3 +53,8 @@ export async function notifyRequestSent(requestId: string) {
   if (!/^[0-9a-f-]{36}$/.test(requestId)) return;
   await notify(await createClient(), "new_request", requestId);
 }
+
+export async function submitReview(f: FormData) {
+  const id = text(f, "id");
+  await run(id, (s) => s.rpc("submit_review", { p_booking: text(f, "booking"), p_rating: Number(text(f, "rating")) || null, p_comment: text(f, "comment") || null }), "Thank you. Your review has been posted.");
+}

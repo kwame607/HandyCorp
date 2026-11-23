@@ -10,7 +10,7 @@ import Combobox from "@/components/Combobox";
 import AddressPicker, { type Place } from "./AddressPicker";
 
 export type ServiceOption = { slug: string; name: string; category: string };
-type Pro = { user_id: string; name: string; description: string; experience: string };
+type Pro = { user_id: string; name: string; description: string; experience: string; average?: number; total?: number };
 
 const steps = ["The job", "Where", "When", "Who", "Review"];
 const years: Record<string, string> = { "under-1": "Under 1 year", "1-3": "1 to 3 years", "4-9": "4 to 9 years", "10-plus": "10+ years" };
@@ -77,7 +77,12 @@ export default function RequestWizard({ services, areas, initialService }: { ser
       setPros(null);
       const { data, error: e } = await createBrowserSupabase().rpc("eligible_professionals", { p_service_slug: service.slug, p_area_slug: area.slug });
       if (e) return setError("Could not load professionals. Please try again.");
-      const list = (data ?? []) as Pro[];
+      let list = (data ?? []) as Pro[];
+      if (list.length) {
+        const { data: rt } = await createBrowserSupabase().rpc("professional_ratings", { p_ids: list.map((p) => p.user_id) });
+        const by = new Map(((rt ?? []) as { professional_id: string; average: number; total: number }[]).map((x) => [x.professional_id, x]));
+        list = list.map((p) => ({ ...p, average: Number(by.get(p.user_id)?.average) || undefined, total: Number(by.get(p.user_id)?.total) || 0 }));
+      }
       setPros(list);
       setChosen(list.slice(0, 3).map((p) => p.user_id));
     }
@@ -234,7 +239,7 @@ export default function RequestWizard({ services, areas, initialService }: { ser
                     />
                     <span className="min-w-0">
                       <span className="block font-bold">{p.name} <span className="ml-1 rounded bg-sand px-2 py-0.5 text-xs font-semibold">Verified</span></span>
-                      <span className="block text-sm text-slate">{years[p.experience] ?? p.experience} experience</span>
+                      <span className="block text-sm text-slate">{years[p.experience] ?? p.experience} experience · {p.total ? `★ ${p.average} (${p.total} review${p.total > 1 ? "s" : ""})` : "No reviews yet"}</span>
                       <span className="mt-1 line-clamp-3 block text-[15px]">{p.description}</span>
                     </span>
                   </label>

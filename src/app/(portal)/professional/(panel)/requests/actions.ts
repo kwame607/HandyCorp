@@ -64,3 +64,7 @@ export async function updateBooking(f: FormData) {
   const booking = text(f, "booking");
   await run("/professional/bookings", (s) => s.rpc("update_booking_status", { p_id: booking, p_status: status, p_reason: text(f, "reason") || null }), status === "cancelled" ? "Booking cancelled." : "Booking updated.", () => ["booking_update", booking]);
 }
+
+export async function replyToReview(f: FormData) {
+  await run("/professional/reviews", (s) => s.rpc("reply_to_review", { p_id: text(f, "review"), p_reply: text(f, "reply") }), "Reply posted.");
+}
