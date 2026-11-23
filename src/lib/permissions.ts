@@ -4,7 +4,7 @@ export type StaffRole = "super_admin" | "operations_manager" | "verification_off
 
 export const permissions = [
   "professionals.view", "professionals.verify", "workrequests.decide", "customers.view", "accounts.manage",
-  "catalogue.manage", "bookings.view", "support.view", "analytics.view", "finance.view", "staff.manage", "audit.view",
+  "catalogue.manage", "bookings.view", "support.view", "analytics.view", "finance.view", "finance.manage", "staff.manage", "audit.view",
 ] as const;
 export type Permission = (typeof permissions)[number];
 
@@ -19,6 +19,7 @@ const matrix: Record<Permission, StaffRole[]> = {
   "support.view": ["super_admin", "operations_manager", "customer_support"],
   "analytics.view": ["super_admin", "operations_manager", "finance_officer"],
   "finance.view": ["super_admin", "finance_officer"],
+  "finance.manage": ["super_admin", "finance_officer"],
   "staff.manage": ["super_admin"],
   "audit.view": ["super_admin"],
 };
