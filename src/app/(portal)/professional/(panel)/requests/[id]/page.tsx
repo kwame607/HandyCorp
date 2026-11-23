@@ -7,13 +7,14 @@ import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { day, money, stamp, statusLabel } from "@/lib/format";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
-import { declineRequest, sendMessage, submitQuote, withdrawQuote } from "../actions";
+import { cancelInspectionPro, completeInspection, declineRequest, proposeInspection, sendMessage, submitQuote, withdrawInspection, withdrawQuote } from "../actions";
 
 export const metadata = { title: "Request | HandyCorp" };
 type Search = { done?: string; error?: string };
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 const input = "mt-1 w-full rounded-md border border-ink/30 bg-white px-3 py-2 text-[16px]";
 const btn = "rounded-md px-5 py-2.5 font-bold";
+const insLabel: Record<string, string> = { proposed: "Waiting for the customer", declined: "Declined", withdrawn: "Withdrawn", confirmed: "Paid. Visit booked", completed: "Completed", cancelled: "Cancelled" };
 function dates() {
   const t = Date.now();
   const iso = (n: number) => new Date(t + n * 86400000).toISOString().slice(0, 10);
@@ -33,11 +34,13 @@ async function Body({ id, search }: { id: string; search: Search }) {
     .maybeSingle();
   if (!inv) notFound();
   const r = one(inv.service_requests);
-  const [photos, quotes, messages] = await Promise.all([
+  const [photos, quotes, messages, inspections] = await Promise.all([
     supabase.from("request_photos").select("storage_path").eq("request_id", inv.request_id),
     supabase.from("quotations").select("id, ref, version, status, scope, duration_note, proposed_start, expires_at, exclusions, warranty, total, quotation_items(kind, description, amount, sort)").eq("invitation_id", id).order("version"),
     supabase.from("request_messages").select("id, sender_id, body, created_at").eq("invitation_id", id).order("created_at"),
+    supabase.from("inspections").select("id, ref, fee, reason, scope, proposed_at, status, findings, cancel_reason").eq("invitation_id", id).order("created_at"),
   ]);
+  const liveInspection = (inspections.data ?? []).find((x) => ["proposed", "confirmed", "completed"].includes(x.status));
   const signed = photos.data?.length ? (await supabase.storage.from("request-uploads").createSignedUrls(photos.data.map((p) => p.storage_path), 600)).data ?? [] : [];
   const live = quotes.data?.find((q) => q.status === "submitted");
   const canAct = r?.status === "open" && ["invited", "quoted"].includes(inv.status);
@@ -88,6 +91,51 @@ async function Body({ id, search }: { id: string; search: Search }) {
           </form>
         )}
       </section>
+
+      {((inspections.data ?? []).length > 0 || canAct) && (
+        <section className="mt-10" aria-labelledby="ins">
+          <h2 id="ins" className="font-display text-xl font-bold">Inspection</h2>
+          {(inspections.data ?? []).map((x) => (
+            <div key={x.id} className="mt-3 rounded-md border border-line bg-white p-4">
+              <p className="flex flex-wrap justify-between gap-2"><span className="font-semibold">{x.ref}: {money(x.fee)}</span><span className="text-sm text-slate">{insLabel[x.status] ?? x.status}</span></p>
+              <p className="mt-1 text-sm text-slate">Visit: {stamp(x.proposed_at)}</p>
+              <p className="mt-2 whitespace-pre-wrap">{x.scope}</p>
+              {x.findings && <p className="mt-2 whitespace-pre-wrap rounded bg-sand px-3 py-2"><strong>Findings:</strong> {x.findings}</p>}
+              {x.cancel_reason && <p className="mt-1 text-sm text-slate">Reason: {x.cancel_reason}</p>}
+              {x.status === "proposed" && (
+                <form action={withdrawInspection} className="mt-3"><input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} /><button className={`${btn} border border-ink hover:bg-ink hover:text-paper`}>Withdraw proposal</button></form>
+              )}
+              {x.status === "confirmed" && (
+                <div className="mt-3 space-y-3">
+                  <form action={completeInspection} className="space-y-2">
+                    <input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} />
+                    <label className="block"><span className="font-semibold">What you found, and what is likely needed</span><textarea name="findings" required minLength={10} maxLength={1000} rows={3} className={input} /></label>
+                    <button className={`${btn} bg-gold hover:bg-gold-deep`}>Mark inspection completed</button>
+                  </form>
+                  <form action={cancelInspectionPro} className="flex flex-wrap items-end gap-3">
+                    <input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} />
+                    <label className="min-w-48 flex-1"><span className="text-sm font-semibold">Cannot make it? Reason</span><input name="reason" maxLength={300} className={input} /></label>
+                    <ConfirmSubmit label="Cancel inspection" requires="reason" title="Cancel this inspection?" message="The customer will be refunded and told." tone="danger" />
+                  </form>
+                </div>
+              )}
+            </div>
+          ))}
+          {canAct && !liveInspection && (
+            <form action={proposeInspection} className="mt-3 space-y-3 rounded-md border border-line bg-white p-4">
+              <p className="text-slate">Cannot price this from the description? Propose a paid visit. The customer approves and pays before you go. If they book you, the fee is credited to the job. If they do not, you keep it.</p>
+              <input type="hidden" name="id" value={id} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block"><span className="font-semibold">Inspection fee (GH₵)</span><input name="fee" required inputMode="decimal" pattern="[0-9]+(\.[0-9]{1,2})?" className={input} /></label>
+                <label className="block"><span className="font-semibold">Visit date and time</span><input type="datetime-local" name="when" required className={input} /></label>
+              </div>
+              <label className="block"><span className="font-semibold">Why a visit is needed</span><textarea name="reason" required minLength={10} maxLength={500} rows={2} className={input} /></label>
+              <label className="block"><span className="font-semibold">What the inspection covers</span><textarea name="scope" required minLength={10} maxLength={500} rows={2} className={input} /></label>
+              <button className={`${btn} border border-ink hover:bg-ink hover:text-paper`}>Propose inspection</button>
+            </form>
+          )}
+        </section>
+      )}
 
       {(quotes.data ?? []).length > 0 && (
         <section className="mt-10" aria-labelledby="qs">

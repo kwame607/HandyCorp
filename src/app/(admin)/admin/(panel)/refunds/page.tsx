@@ -19,14 +19,14 @@ async function Body({ searchParams }: PageProps<"/admin/refunds">) {
   const sp = await searchParams;
   const { data, error } = await (await createClient())
     .from("payments")
-    .select("id, ref, amount, status, note, created_at, bookings(ref, cancel_reason)")
+    .select("id, ref, amount, status, note, created_at, bookings(ref, cancel_reason), inspections(ref, cancel_reason)")
     .in("status", ["refund_due", "refunded"])
     .order("created_at", { ascending: false })
     .limit(100);
   const rows = data ?? [];
   return (
     <>
-      <PageHeader title="Refunds & Disputes" text="Paid bookings that were cancelled. Send the refund from Paystack yourself, then record it here. Disputes are not available yet." />
+      <PageHeader title="Refunds & Disputes" text="Paid bookings and inspections that were cancelled. Send the refund from Paystack yourself, then record it here. Disputes are not available yet." />
       {str(sp.done) && <Notice tone="ok">{str(sp.done)}</Notice>}
       {str(sp.error) && <Notice tone="error">{str(sp.error)}</Notice>}
       {error && <Notice tone="error">Couldn&apos;t load refunds. Try again.</Notice>}
@@ -34,14 +34,14 @@ async function Body({ searchParams }: PageProps<"/admin/refunds">) {
         <Empty title="No refunds due" text="Cancelled bookings that were already paid appear here." />
       ) : (
         <Table>
-          <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payment</Th><Th>Booking</Th><Th>Amount</Th><Th>Cancel reason</Th><Th>Status</Th><Th>Date</Th>{manage && <Th />}</tr></thead>
+          <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payment</Th><Th>Booking / inspection</Th><Th>Amount</Th><Th>Cancel reason</Th><Th>Status</Th><Th>Date</Th>{manage && <Th />}</tr></thead>
           <tbody className="divide-y divide-line">
             {rows.map((r) => (
               <tr key={r.id} className="align-top">
                 <Td className="font-semibold">{r.ref}</Td>
-                <Td>{one(r.bookings)?.ref}</Td>
+                <Td>{one(r.bookings)?.ref ?? one(r.inspections)?.ref}</Td>
                 <Td>{money(r.amount)}</Td>
-                <Td className="max-w-xs break-words">{one(r.bookings)?.cancel_reason}</Td>
+                <Td className="max-w-xs break-words">{one(r.bookings)?.cancel_reason ?? one(r.inspections)?.cancel_reason}</Td>
                 <Td><StatusBadge status={r.status} />{r.note && <span className="mt-1 block text-xs text-slate">{r.note}</span>}</Td>
                 <Td>{fmtDate(r.created_at)}</Td>
                 {manage && (

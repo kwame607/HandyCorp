@@ -68,3 +68,29 @@ export async function updateBooking(f: FormData) {
 export async function replyToReview(f: FormData) {
   await run("/professional/reviews", (s) => s.rpc("reply_to_review", { p_id: text(f, "review"), p_reply: text(f, "reply") }), "Reply posted.");
 }
+
+export async function proposeInspection(f: FormData) {
+  const id = text(f, "id");
+  const when = text(f, "when"); // Ghana time is UTC all year, so the local time is sent as UTC.
+  await run(
+    `/professional/requests/${id}`,
+    (s) => s.rpc("propose_inspection", { p_invitation: id, p_fee: Number(text(f, "fee")), p_reason: text(f, "reason"), p_scope: text(f, "scope"), p_at: when ? `${when}:00+00:00` : null }),
+    "Inspection proposed. The customer has been told.",
+    (ins) => (typeof ins === "string" ? ["inspection_proposed", ins] : null),
+  );
+}
+
+export async function withdrawInspection(f: FormData) {
+  const id = text(f, "id");
+  await run(`/professional/requests/${id}`, (s) => s.rpc("withdraw_inspection", { p_id: text(f, "inspection") }), "Proposal withdrawn.");
+}
+
+export async function completeInspection(f: FormData) {
+  const id = text(f, "id");
+  await run(`/professional/requests/${id}`, (s) => s.rpc("complete_inspection", { p_id: text(f, "inspection"), p_findings: text(f, "findings") }), "Inspection completed. You can now send your quote.");
+}
+
+export async function cancelInspectionPro(f: FormData) {
+  const id = text(f, "id");
+  await run(`/professional/requests/${id}`, (s) => s.rpc("cancel_inspection", { p_id: text(f, "inspection"), p_reason: text(f, "reason") }), "Inspection cancelled. The customer will be refunded.");
+}

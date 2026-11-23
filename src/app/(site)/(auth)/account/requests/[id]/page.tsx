@@ -8,12 +8,13 @@ import { createClient } from "@/lib/supabase/server";
 import { day, money, stamp, statusLabel } from "@/lib/format";
 import ConfirmSubmit from "@/components/admin/ConfirmSubmit";
 import { verifyAndRecord } from "@/lib/paystack";
-import { cancelBooking, cancelRequest, respondQuote, sendMessage, startPayment, submitReview } from "../actions";
+import { cancelBooking, cancelInspectionCustomer, cancelRequest, declineInspection, respondQuote, sendMessage, startInspectionPayment, startPayment, submitReview } from "../actions";
 
 export const metadata = { title: "Request | HandyCorp" };
 type Search = { sent?: string; done?: string; error?: string; reference?: string };
 const one = <T,>(v: T | T[] | null): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);
 const btn = "rounded-md px-5 py-2.5 font-bold";
+const insLabel: Record<string, string> = { proposed: "Waiting for your answer", declined: "Declined", confirmed: "Paid, visit booked", completed: "Completed", cancelled: "Cancelled" };
 
 async function Body({ id, search }: { id: string; search: Search }) {
   await connection();
@@ -30,13 +31,15 @@ async function Body({ id, search }: { id: string; search: Search }) {
     .maybeSingle();
   if (!r) notFound();
 
-  const [loc, photos, pros, quotes, messages, booking] = await Promise.all([
+  const [loc, photos, pros, quotes, messages, booking, inspections, openRes] = await Promise.all([
     supabase.from("request_locations").select("address").eq("request_id", id).maybeSingle(),
     supabase.from("request_photos").select("storage_path, file_name").eq("request_id", id),
     supabase.rpc("request_professionals", { p_request: id }),
     supabase.from("quotations").select("id, ref, invitation_id, version, status, scope, duration_note, proposed_start, expires_at, exclusions, warranty, total, created_at, quotation_items(kind, description, amount, sort)").eq("request_id", id).order("version"),
     supabase.from("request_messages").select("id, invitation_id, sender_id, body, created_at, request_invitations!inner(request_id)").eq("request_invitations.request_id", id).order("created_at"),
-    supabase.from("bookings").select("id, ref, status, agreed_total, cancel_reason, professional_id, quotation_id").eq("request_id", id).maybeSingle(),
+    supabase.from("bookings").select("id, ref, status, agreed_total, credit_amount, cancel_reason, professional_id, quotation_id").eq("request_id", id).maybeSingle(),
+    supabase.from("inspections").select("id, ref, invitation_id, fee, reason, scope, proposed_at, status, findings, cancel_reason").eq("request_id", id).order("created_at"),
+    supabase.rpc("payments_open"),
   ]);
   const signed = photos.data?.length
     ? (await supabase.storage.from("request-uploads").createSignedUrls(photos.data.map((p) => p.storage_path), 600)).data ?? []
@@ -45,7 +48,7 @@ async function Body({ id, search }: { id: string; search: Search }) {
   const payment = booking.data
     ? (await supabase.from("payments").select("status, amount").eq("booking_id", booking.data.id).eq("kind", "job").order("created_at", { ascending: false }).limit(1).maybeSingle()).data
     : null;
-  const payOpen = booking.data ? ((await supabase.rpc("payments_open")).data === true) : false;
+  const payOpen = openRes.data === true;
   const review = booking.data?.status === "completed"
     ? (await supabase.from("reviews").select("rating, comment, reply").eq("booking_id", booking.data.id).maybeSingle()).data
     : null;
@@ -91,7 +94,7 @@ async function Body({ id, search }: { id: string; search: Search }) {
       {booking.data && (
         <section className="mt-10 rounded-md border border-ink bg-white p-5" aria-labelledby="bk">
           <h2 id="bk" className="font-display text-xl font-bold">Booking {booking.data.ref}: {statusLabel[booking.data.status]}</h2>
-          <p className="mt-1">Agreed price: <strong>{money(booking.data.agreed_total)}</strong>.{!payOpen && " Pay the professional directly, as agreed. HandyCorp does not take payment yet."}</p>
+          <p className="mt-1">Agreed price: <strong>{money(booking.data.agreed_total)}</strong>.{Number(booking.data.credit_amount) > 0 && <> Your inspection fee of {money(booking.data.credit_amount)} is credited, so you pay <strong>{money(Number(booking.data.agreed_total) - Number(booking.data.credit_amount))}</strong>.</>}{!payOpen && " Pay the professional directly, as agreed. HandyCorp does not take payment yet."}</p>
           {paidNow === "recorded" && <p role="status" className="mt-2 font-semibold">Payment received. Thank you.</p>}
           {paidNow === "pending" && <p role="status" className="mt-2">Your payment is still being confirmed. Refresh this page in a minute.</p>}
           {paidNow === "failed" && payment?.status !== "paid" && <p role="alert" className="mt-2 text-red-800">The payment did not go through. You can try again below.</p>}
@@ -103,7 +106,7 @@ async function Body({ id, search }: { id: string; search: Search }) {
             ) : (
               <form action={startPayment} className="mt-3">
                 <input type="hidden" name="id" value={id} /><input type="hidden" name="booking" value={booking.data.id} />
-                <button className={`${btn} bg-gold hover:bg-gold-deep`}>Pay {money(booking.data.agreed_total)} online</button>
+                <button className={`${btn} bg-gold hover:bg-gold-deep`}>Pay {money(Number(booking.data.agreed_total) - Number(booking.data.credit_amount))} online</button>
                 <p className="mt-1 text-sm text-slate">Pay with mobile money or card through Paystack. HandyCorp pays the professional after the job is completed.</p>
               </form>
             )
@@ -162,6 +165,38 @@ async function Body({ id, search }: { id: string; search: Search }) {
                 <li key={p.invitation_id} className="rounded-md border border-line bg-white p-5">
                   <p className="flex flex-wrap items-center justify-between gap-2"><Link href={`/professionals/${p.professional_id}`} className="font-bold underline-offset-4 hover:underline">{p.name}</Link><span className="rounded bg-sand px-2 py-0.5 text-sm font-semibold">{statusLabel[p.status]}</span></p>
                   {p.status === "declined" && <p className="mt-1 text-slate">{p.decline_reason ? `Reason: ${p.decline_reason}` : "No reason given."}</p>}
+                  {(inspections.data ?? []).filter((x) => x.invitation_id === p.invitation_id && !["withdrawn"].includes(x.status)).map((x) => (
+                    <div key={x.id} className="mt-4 rounded-md border border-line p-4">
+                      <p className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">Inspection {x.ref}: {money(x.fee)}</span><span className="text-sm text-slate">{insLabel[x.status] ?? x.status}</span></p>
+                      <p className="mt-1 text-sm text-slate">Visit: {stamp(x.proposed_at)}</p>
+                      <p className="mt-2"><strong>Why:</strong> {x.reason}</p>
+                      <p className="mt-1"><strong>Covers:</strong> {x.scope}</p>
+                      {x.findings && <p className="mt-2 whitespace-pre-wrap rounded bg-sand px-3 py-2"><strong>Findings:</strong> {x.findings}</p>}
+                      {x.cancel_reason && <p className="mt-1 text-sm text-slate">Reason: {x.cancel_reason}</p>}
+                      {x.status === "proposed" && open && (
+                        <div className="mt-3 flex flex-wrap items-end gap-3">
+                          {payOpen ? (
+                            <form action={startInspectionPayment}>
+                              <input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} />
+                              <button className={`${btn} bg-gold hover:bg-gold-deep`}>Approve and pay {money(x.fee)}</button>
+                            </form>
+                          ) : <p className="text-sm text-slate">Online payment is not open yet, so this cannot be approved here.</p>}
+                          <form action={declineInspection}>
+                            <input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} />
+                            <button className={`${btn} border border-ink hover:bg-ink hover:text-paper`}>Decline</button>
+                          </form>
+                          <p className="basis-full text-sm text-slate">If you book this professional, the fee is credited to the job. If you do not book them after the visit, they keep the fee.</p>
+                        </div>
+                      )}
+                      {x.status === "confirmed" && (
+                        <form action={cancelInspectionCustomer} className="mt-3 flex flex-wrap items-end gap-3">
+                          <input type="hidden" name="id" value={id} /><input type="hidden" name="inspection" value={x.id} />
+                          <label className="min-w-48 flex-1"><span className="text-sm font-semibold">Reason for cancelling</span><input name="reason" maxLength={300} className="mt-1 w-full rounded-md border border-ink/30 px-3 py-2" /></label>
+                          <ConfirmSubmit label="Cancel inspection" requires="reason" title="Cancel this inspection?" message="The professional will be told. Your fee will be refunded." tone="danger" />
+                        </form>
+                      )}
+                    </div>
+                  ))}
                   {qs.map((q) => {
                     const items = [...(q.quotation_items ?? [])].sort((a, b) => a.sort - b.sort);
                     return (

@@ -21,7 +21,7 @@ async function Body({ searchParams }: PageProps<"/admin/commissions">) {
   const supabase = await createClient();
   const [settings, payouts] = await Promise.all([
     supabase.from("payment_settings").select("commission_percent, payout_hold_hours").maybeSingle(),
-    supabase.from("payouts").select("id, ref, amount, status, due_at, transfer_reference, note, created_at, bookings(ref)").order("created_at", { ascending: false }).limit(100),
+    supabase.from("payouts").select("id, ref, amount, status, due_at, transfer_reference, note, created_at, bookings(ref), inspections(ref)").order("created_at", { ascending: false }).limit(100),
   ]);
   const s = settings.data;
   const rows = payouts.data ?? [];
@@ -48,14 +48,14 @@ async function Body({ searchParams }: PageProps<"/admin/commissions">) {
         <Empty title="No payouts yet" text="A payout appears here once a job is completed and the customer's payment is recorded." />
       ) : (
         <Table>
-          <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payout</Th><Th>Booking</Th><Th>Amount</Th><Th>Due</Th><Th>Status</Th>{manage && <Th />}</tr></thead>
+          <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payout</Th><Th>Booking / inspection</Th><Th>Amount</Th><Th>Due</Th><Th>Status</Th>{manage && <Th />}</tr></thead>
           <tbody className="divide-y divide-line">
             {rows.map((r) => {
               const due = new Date(r.due_at).getTime() <= now;
               return (
                 <tr key={r.id} className="align-top">
                   <Td className="font-semibold">{r.ref}</Td>
-                  <Td>{one(r.bookings)?.ref}</Td>
+                  <Td>{one(r.bookings)?.ref ?? one(r.inspections)?.ref}</Td>
                   <Td>{money(r.amount)}</Td>
                   <Td>{fmtDateTime(r.due_at)}{r.status === "pending" && <span className="block text-xs text-slate">{due ? "Ready to pay" : "Waiting for the hold to end"}</span>}</Td>
                   <Td><StatusBadge status={r.status} />{r.transfer_reference && <span className="mt-1 block text-xs text-slate">{r.transfer_reference}</span>}</Td>

@@ -21,7 +21,7 @@ async function Body({ searchParams }: PageProps<"/admin/payments">) {
   const supabase = await createClient();
   const { data, count, error } = await supabase
     .from("payments")
-    .select("id, ref, kind, amount, commission_amount, provider_amount, status, gateway_reference, created_at, bookings(ref)", { count: "exact" })
+    .select("id, ref, kind, amount, commission_amount, provider_amount, status, gateway_reference, created_at, bookings(ref), inspections(ref)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
   const rows = data ?? [];
@@ -36,12 +36,12 @@ async function Body({ searchParams }: PageProps<"/admin/payments">) {
       ) : (
         <>
           <Table>
-            <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payment</Th><Th>Booking</Th><Th>Type</Th><Th>Amount</Th><Th>Commission</Th><Th>Professional gets</Th><Th>Status</Th><Th>Date</Th>{manage && <Th />}</tr></thead>
+            <thead className="border-b border-line bg-ink/[0.03]"><tr><Th>Payment</Th><Th>Booking / inspection</Th><Th>Type</Th><Th>Amount</Th><Th>Commission</Th><Th>Professional gets</Th><Th>Status</Th><Th>Date</Th>{manage && <Th />}</tr></thead>
             <tbody className="divide-y divide-line">
               {rows.map((r) => (
                 <tr key={r.id} className="align-top">
                   <Td className="font-semibold">{r.ref}</Td>
-                  <Td>{one(r.bookings)?.ref}</Td>
+                  <Td>{one(r.bookings)?.ref ?? one(r.inspections)?.ref}</Td>
                   <Td className="capitalize">{r.kind}</Td>
                   <Td>{money(r.amount)}</Td>
                   <Td>{money(r.commission_amount)}</Td>

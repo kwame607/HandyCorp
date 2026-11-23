@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
-export type NotifyEvent = "new_request" | "quote" | "declined" | "message" | "booked" | "booking_update";
+export type NotifyEvent = "inspection_proposed" | "new_request" | "quote" | "declined" | "message" | "booked" | "booking_update";
 type Row = { to_email: string; to_name: string; service: string; area: string; ref: string; detail: string; path: string };
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
@@ -12,6 +12,8 @@ const bookingWords: Record<string, string> = { in_progress: "has started the job
 function compose(event: NotifyEvent, r: Row): { subject: string; lines: string[]; button: string } {
   const job = `${r.service} in ${r.area}`;
   switch (event) {
+    case "inspection_proposed":
+      return { subject: `A professional proposes a visit for ${job}`, lines: [`A professional wants to inspect the job before quoting (${r.ref}): ${r.detail}.`, "Open your request to read why, then approve and pay, or decline. The fee is credited to the job if you book this professional."], button: "Review proposal" };
     case "new_request":
       return { subject: `New request: ${job}`, lines: [`A customer wants a quote for ${job}.`, `“${r.detail}”`, "Open the request to reply with a quote, a question, or a decline."], button: "View request" };
     case "quote":
@@ -53,7 +55,7 @@ async function send(to: string, subject: string, html: string, text: string) {
 // is part of. A failure here never breaks the action that triggered it.
 export async function notify(supabase: Supabase, event: NotifyEvent, id: string) {
   try {
-    const { data } = await supabase.rpc("notification_info", { p_event: event, p_id: id });
+    const { data } = event === "inspection_proposed" ? await supabase.rpc("inspection_notice", { p_id: id }) : await supabase.rpc("notification_info", { p_event: event, p_id: id });
     const site = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
     for (const r of (data ?? []) as Row[]) {
       const m = compose(event, r);

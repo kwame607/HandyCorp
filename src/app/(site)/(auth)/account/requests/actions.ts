@@ -61,22 +61,41 @@ export async function submitReview(f: FormData) {
 }
 
 // Creates the payment record, then sends the customer to Paystack to pay.
-export async function startPayment(f: FormData) {
+async function pay(f: FormData, kind: "job" | "inspection") {
   const id = text(f, "id");
-  const bookingId = text(f, "booking");
+  const target = text(f, kind === "job" ? "booking" : "inspection");
   const user = await requireRole("customer", "/login", `/account/requests/${id}`);
   const back = (q: string) => redirect(`/account/requests/${id}?${q}`);
-  if (!paymentsConfigured() || !user.email) return back("error=" + encodeURIComponent("Online payment is not available yet."));
+  const fail = (m: string) => back("error=" + encodeURIComponent(m));
+  if (!paymentsConfigured() || !user.email) return fail("Online payment is not available yet.");
   const supabase = await createClient();
-  const { data: paymentId, error } = await supabase.rpc("create_job_payment", { p_booking: bookingId });
-  if (error || !paymentId) return back("error=" + encodeURIComponent(error ? dbMessage(error) : "Something went wrong. Please try again."));
-  const { data: pay } = await supabase.from("payments").select("ref, amount").eq("id", paymentId).maybeSingle();
-  if (!pay) return back("error=" + encodeURIComponent("Something went wrong. Please try again."));
-  const reference = `${pay.ref}-${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
+  const { data: paymentId, error } = await supabase.rpc(kind === "job" ? "create_job_payment" : "create_inspection_payment", kind === "job" ? { p_booking: target } : { p_inspection: target });
+  if (error || !paymentId) return fail(error ? dbMessage(error) : "Something went wrong. Please try again.");
+  const { data: payment } = await supabase.from("payments").select("ref, amount").eq("id", paymentId).maybeSingle();
+  if (!payment) return fail("Something went wrong. Please try again.");
+  const reference = `${payment.ref}-${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
   const { error: refError } = await supabase.rpc("set_payment_reference", { p_payment: paymentId, p_reference: reference });
-  if (refError) return back("error=" + encodeURIComponent(dbMessage(refError)));
+  if (refError) return fail(dbMessage(refError));
   const site = (process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/\/$/, "");
-  const url = await initialize({ email: user.email, amount: Number(pay.amount), reference, callbackUrl: `${site}/account/requests/${id}`, paymentRef: pay.ref }).catch(() => null);
-  if (!url) return back("error=" + encodeURIComponent("Could not reach Paystack. Please try again."));
+  const url = await initialize({ email: user.email, amount: Number(payment.amount), reference, callbackUrl: `${site}/account/requests/${id}`, paymentRef: payment.ref }).catch(() => null);
+  if (!url) return fail("Could not reach Paystack. Please try again.");
   redirect(url);
+}
+
+export async function startPayment(f: FormData) {
+  await pay(f, "job");
+}
+
+export async function startInspectionPayment(f: FormData) {
+  await pay(f, "inspection");
+}
+
+export async function declineInspection(f: FormData) {
+  const id = text(f, "id");
+  await run(id, (s) => s.rpc("decline_inspection", { p_id: text(f, "inspection"), p_note: text(f, "note") || null }), "Inspection proposal declined.");
+}
+
+export async function cancelInspectionCustomer(f: FormData) {
+  const id = text(f, "id");
+  await run(id, (s) => s.rpc("cancel_inspection", { p_id: text(f, "inspection"), p_reason: text(f, "reason") }), "Inspection cancelled. Your refund will be processed.");
 }
